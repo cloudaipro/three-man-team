@@ -34,4 +34,4 @@ Confirm where we stopped and what the next action is. Then wait.
 ---
 
 ## Version Check
-version_notified: v1.2.3
+version_notified:

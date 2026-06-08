@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 — 2026-06-04
+
+- Feature: manifest.md introduced — new-setup.md now generates manifest.md at first-time setup capturing team names, role filenames, handoff dir, repo, and installed version
+- Improve: version check upgraded — reads manifest.md instead of VERSION file, fetches releases/latest.json directly (no API dependency, no jq required for initial check)
+- Improve: release JSON schema updated — how_to_assess and user_decision fields replace migration_steps; Arch reads user's actual files before walking through any change
+- Improve: two-file fetch strategy — releases/latest.json fetched every session (tiny); releases/v{version}.json fetched only when update needed
+- Improve: Anti-Drift rule added to both ARCHITECT.md files — rename any role file, update manifest.md immediately
+- Remove: VERSION file retired from templates/project-folder/ — version now tracked in manifest.md
+- Fix: SESSION-CHECKPOINT.md templates — version_notified now blank at install time (filled by new-setup.md); project-folder template was missing Version Check section entirely
+
 ## v1.2.5 — 2026-06-04
 
 - Fix: RICHARD.md → REVIEWER.md in Richard spinup prompt — Richard was told to read a file that doesn't exist

@@ -98,6 +98,38 @@ If they don't want RTK — keep going. They can install it any time.
 
 ---
 
+## Generate manifest.md
+
+Before closing setup, fetch the current version:
+```bash
+curl -s https://raw.githubusercontent.com/russelleNVy/three-man-team/main/releases/latest.json | jq -r '.version' 2>/dev/null
+```
+(Fallback without jq: `curl -s https://raw.githubusercontent.com/russelleNVy/three-man-team/main/releases/latest.json | grep -o '"version": *"[^"]*"' | cut -d'"' -f4`)
+
+Create `manifest.md` in the project root with the values confirmed during setup:
+
+```
+# Three Man Team — Manifest
+
+version: [fetched version]
+installed: [today's date]
+
+## Team
+architect: [confirmed architect name] — [confirmed architect filename]
+builder: [confirmed builder name] — [confirmed builder filename]
+reviewer: [confirmed reviewer name] — [confirmed reviewer filename]
+
+## Project
+handoff_dir: handoff/
+repo: [project repo URL, or blank if none]
+branch: main
+context_file: [confirmed context file name]
+```
+
+Then write `version_notified: [fetched version]` to `handoff/SESSION-CHECKPOINT.md` under `## Version Check`.
+
+---
+
 ## When Setup Is Complete
 
 Tell the user:
