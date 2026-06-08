@@ -12,12 +12,12 @@
 
 ---
 
-## What's New — v1.2.5
+## What's New — v1.3.0
 
-- Fixed: RICHARD.md → REVIEWER.md in Richard spinup prompt ([#9](https://github.com/russelleNVy/three-man-team/issues/9))
-- Fixed: BOB.md → BUILDER.md missed in root-level template (v1.2.4 incomplete)
-- Fixed: version check upgraded to full procedure with migration walkthrough
-- Removed fabricated DeepMind citation — replaced with first-principles reasoning
+- New: `manifest.md` — Arch generates this at first-time setup. Single source of truth for your install: team names, role filenames, handoff directory, repo, branch.
+- Improved: version check now reads a version registry (`releases/latest.json`) instead of hitting the GitHub API. Critical updates are mandatory checkpoints; non-critical ones are your choice.
+- Improved: Arch reads your actual files before walking through any change — no more guessing at your setup.
+- Removed: `VERSION` file retired. Version lives in `manifest.md`.
 
 See [all releases →](https://github.com/russelleNVy/three-man-team/releases)
 
@@ -160,11 +160,13 @@ See `docs/token-optimization.md` for the full discipline.
 
 ## Auto-Update
 
-Arch checks the GitHub releases API at the start of every session. If a newer version is available, it tells you before doing anything else:
+At the start of every session, Arch fetches `releases/latest.json` — a small version registry that lists every release with a critical or non-critical flag. If you're behind, Arch walks you through the updates before anything else.
 
-> "Three Man Team v1.2.4 is available — you're on v1.2.3. Before we get into today's work, let me walk you through what changed."
+Critical updates are mandatory checkpoints — they ship structural changes (like `manifest.md`) that later updates depend on. Non-critical updates are optional. Arch reads your actual files to determine what applies to your setup before suggesting anything.
 
-Arch walks you through each change in plain language and guides you through any updates your project needs. You decide what to apply and when.
+> "There is an update available — version 1.3.0. Before we get into today's work, I want to walk through what changed. I will look at your actual files and tell you exactly what applies to you."
+
+You decide what to apply and when. Nothing changes without your confirmation.
 
 See [releases](https://github.com/russelleNVy/three-man-team/releases) for what's changed.
 
