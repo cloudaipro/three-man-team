@@ -32,3 +32,6 @@ Read SESSION-CHECKPOINT.md, then ARCHITECT.md.
 Confirm where we stopped and what the next action is. Then wait.
 
 ---
+
+## Version Check
+version_notified:
