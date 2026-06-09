@@ -23,6 +23,14 @@ See [all releases →](https://github.com/russelleNVy/three-man-team/releases)
 
 ---
 
+## Three Man Team Pro
+
+Pre-built teams for developers, marketers, content creators, and more — install in minutes, start working immediately.
+
+[Join the waitlist →](https://russellenvy.com/tool/three-man-team/)
+
+---
+
 ## The Problem With AI Coding Tools
 
 AI coding tools are powerful but undisciplined. They read entire codebases when they
