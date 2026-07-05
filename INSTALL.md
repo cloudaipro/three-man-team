@@ -11,7 +11,7 @@ For the full quick start, see [README.md](README.md).
 Clone into your project folder, then run setup:
 
 ```bash
-git clone https://github.com/russelleNVy/three-man-team.git .claude/skills/three-man-team
+git clone https://github.com/cloudaipro/three-man-team.git .claude/skills/three-man-team
 cd .claude/skills/three-man-team && ./setup
 ```
 
@@ -24,7 +24,7 @@ Setup handles the rest — follow what it prints.
 Install once, use in any project:
 
 ```bash
-git clone https://github.com/russelleNVy/three-man-team.git ~/.claude/skills/three-man-team
+git clone https://github.com/cloudaipro/three-man-team.git ~/.claude/skills/three-man-team
 cd ~/.claude/skills/three-man-team && ./setup
 ```
 
@@ -44,6 +44,20 @@ Open Claude Code and type:
 (or paste: *You are the Architect on this project. Please read new-setup.md.*)
 
 After setup, every session starts with just `/architect`.
+
+---
+
+## Upgrading an Existing Project
+
+```bash
+git -C ~/.claude/skills/three-man-team pull
+~/.claude/skills/three-man-team/upgrade /path/to/your/project
+```
+
+Safe by default: additive installs only, backups of everything it edits, live `handoff/`
+data and custom personas untouched — your next `/architect` session finishes the role-file
+wiring interactively. Stock installs can add `--replace-role-files` for a one-shot upgrade;
+`--dry-run` previews any run.
 
 ---
 

@@ -19,7 +19,7 @@
 
 **v1.4.0** added `playbooks/` — the Architect's planning discipline as on-demand files: `PLANNING.md` (problem framing, step cutting, the seven-question Pre-Flight Check that gates every build), `DIAGNOSIS.md` (read-don't-recall debugging, the two-strikes rule), `BRIEF-EXAMPLES.md` (annotated weak-vs-strong briefs) — plus Out of Scope in every brief, a Lessons section in BUILD-LOG, and a Builder that refuses incomplete briefs.
 
-See [all releases →](https://github.com/russelleNVy/three-man-team/releases)
+See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 
 ---
 
@@ -72,7 +72,7 @@ One project, one install. Clone directly into your project folder.
 **Step 1 — Navigate to your project folder and clone**
 
 ```bash
-git clone https://github.com/russelleNVy/three-man-team.git .claude/skills/three-man-team
+git clone https://github.com/cloudaipro/three-man-team.git .claude/skills/three-man-team
 ```
 
 **Step 2 — Run setup and follow the instructions**
@@ -92,7 +92,7 @@ Install once, use in any project.
 **Step 1 — Clone to your global Claude skills folder**
 
 ```bash
-git clone https://github.com/russelleNVy/three-man-team.git ~/.claude/skills/three-man-team
+git clone https://github.com/cloudaipro/three-man-team.git ~/.claude/skills/three-man-team
 cd ~/.claude/skills/three-man-team && ./setup
 ```
 
@@ -179,7 +179,30 @@ Critical updates are mandatory checkpoints — they ship structural changes (lik
 
 You decide what to apply and when. Nothing changes without your confirmation.
 
-See [releases](https://github.com/russelleNVy/three-man-team/releases) for what's changed.
+See [releases](https://github.com/cloudaipro/three-man-team/releases) for what's changed.
+
+---
+
+## Upgrading an Existing Project
+
+Update your clone, then run the upgrade tool against your project:
+
+```bash
+git -C ~/.claude/skills/three-man-team pull
+~/.claude/skills/three-man-team/upgrade /path/to/your/project
+```
+
+(Per-project installs: the clone lives at `.claude/skills/three-man-team` inside the project.)
+
+The tool installs everything additive — `playbooks/`, the `/architect` and `/tmt-setup`
+commands, the token-optimizer skill — points your version check at this repo, backs up
+every file it edits, and never touches your live `handoff/` data, team names, or personas.
+Then start your next session with `/architect`: Arch walks the remaining role-file upgrades
+with you interactively.
+
+Never renamed or customized your team? Add `--replace-role-files` to bring ARCHITECT.md,
+BUILDER.md, and REVIEWER.md fully current in one shot (the tool refuses this flag on
+customized installs). Preview any run with `--dry-run`.
 
 ---
 

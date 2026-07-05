@@ -1,0 +1,259 @@
+#!/bin/bash
+# Three Man Team — upgrade tool
+# Upgrades an existing Three Man Team project install to the version in this clone.
+#
+# Usage:
+#   ./upgrade /path/to/your/project                        safe upgrade (recommended)
+#   ./upgrade --replace-role-files /path/to/your/project   also replace the three role
+#                                                          files (stock, never-renamed
+#                                                          installs only)
+#   ./upgrade --dry-run /path/to/your/project              show what would change
+#
+# What the safe upgrade does:
+#   - installs playbooks/ and .claude/commands/ (framework-owned, role-neutral)
+#   - refreshes .claude/skills/token-optimization.md
+#   - points the version check in your role file at this repo
+#   - adds the Lessons section to your live BUILD-LOG
+#   - backs up every file it edits to .tmt-upgrade-backup-<timestamp>/
+#   - NEVER touches your live handoff data, personas, or team names
+#
+# It deliberately leaves your version markers alone: your next session's version
+# check walks the remaining role-file upgrades with you, preserving customizations.
+
+set -u
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TPL="$SCRIPT_DIR/templates/project-folder"
+
+# --- args -------------------------------------------------------------------
+PROJECT=""
+REPLACE=0
+DRY=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --replace-role-files) REPLACE=1 ;;
+    --dry-run)            DRY=1 ;;
+    -h|--help)            sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*)                   echo "Unknown option: $arg (see --help)"; exit 1 ;;
+    *)                    PROJECT="$arg" ;;
+  esac
+done
+
+if [ -z "$PROJECT" ]; then
+  echo "Usage: ./upgrade [--replace-role-files] [--dry-run] /path/to/your/project"
+  exit 1
+fi
+PROJECT="$(cd "$PROJECT" 2>/dev/null && pwd)" || { echo "✗ Project folder not found."; exit 1; }
+
+# --- helpers ----------------------------------------------------------------
+if sed --version >/dev/null 2>&1; then SED_GNU=1; else SED_GNU=0; fi
+sed_i() { # sed_i 'expr' file
+  if [ "$SED_GNU" = 1 ]; then sed -i "$1" "$2"; else sed -i '' "$1" "$2"; fi
+}
+say()  { echo "  $*"; }
+plan() { if [ "$DRY" = 1 ]; then echo "  [dry-run] $*"; else echo "  ✓ $*"; fi; }
+
+# --- sanity -----------------------------------------------------------------
+echo ""
+echo "========================================="
+echo "  Three Man Team — Upgrade"
+echo "========================================="
+echo ""
+
+[ -f "$TPL/playbooks/PLANNING.md" ] || {
+  echo "✗ This clone looks incomplete or old. Run: git -C $SCRIPT_DIR pull"; exit 1; }
+
+LATEST="$(sed -n 's/.*"latest": *"\([^"]*\)".*/\1/p' "$SCRIPT_DIR/releases/latest.json" | head -1)"
+[ -n "$LATEST" ] || { echo "✗ Could not read version from this clone's releases/latest.json"; exit 1; }
+
+# Soft staleness check against the remote registry (skip silently offline)
+REMOTE="$(curl -s --max-time 5 https://raw.githubusercontent.com/cloudaipro/three-man-team/main/releases/latest.json 2>/dev/null | sed -n 's/.*"latest": *"\([^"]*\)".*/\1/p' | head -1)"
+if [ -n "$REMOTE" ] && [ "$REMOTE" != "$LATEST" ]; then
+  echo "⚠ This clone ships $LATEST but the registry says $REMOTE."
+  echo "  Run: git -C $SCRIPT_DIR pull — then re-run this upgrade."
+  exit 1
+fi
+
+# Find the architect role file: manifest.md wins, ARCHITECT.md is the fallback
+ARCH_FILE=""
+if [ -f "$PROJECT/manifest.md" ]; then
+  ARCH_FILE="$(sed -n 's/^architect:.*— *//p' "$PROJECT/manifest.md" | head -1 | tr -d ' ')"
+fi
+[ -n "$ARCH_FILE" ] || ARCH_FILE="ARCHITECT.md"
+
+if [ ! -f "$PROJECT/$ARCH_FILE" ] && [ ! -d "$PROJECT/handoff" ]; then
+  echo "✗ No Three Man Team install found at: $PROJECT"
+  echo "  (looked for $ARCH_FILE and handoff/ — for a fresh install, see README Quick Start)"
+  exit 1
+fi
+
+echo "Project:   $PROJECT"
+echo "Upgrading: to $LATEST  (architect file: $ARCH_FILE)"
+[ "$DRY" = 1 ] && echo "Mode:      dry run — nothing will be changed"
+echo ""
+
+# --- stock check for --replace-role-files ------------------------------------
+if [ "$REPLACE" = 1 ]; then
+  STOCK=1
+  [ "$ARCH_FILE" = "ARCHITECT.md" ] || STOCK=0
+  for f in ARCHITECT.md BUILDER.md REVIEWER.md; do
+    [ -f "$PROJECT/$f" ] || STOCK=0
+  done
+  if [ -f "$PROJECT/ARCHITECT.md" ] && ! grep -q "Your name is Arch" "$PROJECT/ARCHITECT.md"; then
+    STOCK=0
+  fi
+  if [ "$STOCK" = 0 ]; then
+    echo "✗ --replace-role-files refused: this install looks renamed or customized."
+    echo "  Replacing the role files would erase your team names and personas."
+    echo "  Run the safe upgrade instead — your next /architect session will walk"
+    echo "  the role-file changes with you, preserving your customizations."
+    exit 1
+  fi
+fi
+
+# --- backup ------------------------------------------------------------------
+BACKUP="$PROJECT/.tmt-upgrade-backup-$(date +%Y%m%d-%H%M%S)"
+backup() { # backup <relative-path>
+  if [ -e "$PROJECT/$1" ] && [ "$DRY" = 0 ]; then
+    mkdir -p "$BACKUP/$(dirname "$1")"
+    cp -R "$PROJECT/$1" "$BACKUP/$1"
+  fi
+}
+
+echo "— Installing framework-owned files (role-neutral, safe to refresh)"
+
+# 1. playbooks/
+backup "playbooks"
+if [ "$DRY" = 0 ]; then
+  mkdir -p "$PROJECT/playbooks"
+  cp "$TPL/playbooks/"*.md "$PROJECT/playbooks/"
+fi
+plan "playbooks/ — PLANNING.md, DIAGNOSIS.md, BRIEF-EXAMPLES.md"
+
+# 2. slash commands
+if [ "$DRY" = 0 ]; then
+  mkdir -p "$PROJECT/.claude/commands"
+  cp "$TPL/.claude/commands/architect.md" "$TPL/.claude/commands/tmt-setup.md" "$PROJECT/.claude/commands/"
+fi
+plan ".claude/commands/ — /architect and /tmt-setup"
+
+# 3. token-optimizer skill
+if [ "$DRY" = 0 ]; then
+  mkdir -p "$PROJECT/.claude/skills"
+  cp "$TPL/.claude/skills/token-optimization.md" "$PROJECT/.claude/skills/"
+fi
+plan ".claude/skills/token-optimization.md refreshed"
+
+echo ""
+echo "— Pointing the version check at this repo"
+
+# 4. URL switch in role file (+ stale new-setup.md if still present)
+for f in "$ARCH_FILE" new-setup.md; do
+  if [ -f "$PROJECT/$f" ] && grep -q "russelleNVy/three-man-team" "$PROJECT/$f"; then
+    backup "$f"
+    [ "$DRY" = 0 ] && sed_i 's|russelleNVy/three-man-team|cloudaipro/three-man-team|g' "$PROJECT/$f"
+    plan "$f — version check now fetches cloudaipro/three-man-team"
+  fi
+done
+
+echo ""
+echo "— Live handoff files (additive edits only)"
+
+# 5. BUILD-LOG Lessons section
+BL="$PROJECT/handoff/BUILD-LOG.md"
+if [ -f "$BL" ] && ! grep -q "^## Lessons" "$BL"; then
+  backup "handoff/BUILD-LOG.md"
+  if [ "$DRY" = 0 ]; then
+    awk 'BEGIN { block = "## Lessons\n*One line per bounced step or missed intent: what went wrong → which check would have caught it. Architect reads this before writing each new brief.*\n\n- **L-N** — [What went wrong → the check that would have caught it] — [date]\n\n---\n"; done = 0 }
+         /^## Architecture Decisions/ && !done { print block; done = 1 }
+         { print }
+         END { if (!done) { print "\n---\n"; print block } }' "$BL" > "$BL.tmp" && mv "$BL.tmp" "$BL"
+  fi
+  plan "handoff/BUILD-LOG.md — Lessons section added (your data untouched)"
+else
+  say "handoff/BUILD-LOG.md — already has Lessons, or not present. Skipped."
+fi
+
+# --- role files + version markers --------------------------------------------
+echo ""
+if [ "$REPLACE" = 1 ]; then
+  echo "— Replacing stock role files and stamping the version"
+
+  for f in ARCHITECT.md BUILDER.md REVIEWER.md; do
+    backup "$f"
+    [ "$DRY" = 0 ] && cp "$TPL/$f" "$PROJECT/$f"
+    plan "$f replaced with the $LATEST template"
+  done
+
+  if [ -f "$PROJECT/manifest.md" ]; then
+    backup "manifest.md"
+    if [ "$DRY" = 0 ]; then
+      sed_i "s/^version:.*/version: $LATEST/" "$PROJECT/manifest.md"
+      grep -q "^playbooks_dir:" "$PROJECT/manifest.md" || \
+        sed_i 's|^handoff_dir:.*|&\nplaybooks_dir: playbooks/|' "$PROJECT/manifest.md"
+    fi
+    plan "manifest.md — version: $LATEST, playbooks_dir added"
+  else
+    if [ "$DRY" = 0 ]; then
+      cat > "$PROJECT/manifest.md" <<MANIFEST
+# Three Man Team — Manifest
+
+version: $LATEST
+installed: $(date +%Y-%m-%d)
+
+## Team
+architect: Arch — ARCHITECT.md
+builder: Bob — BUILDER.md
+reviewer: Richard — REVIEWER.md
+
+## Project
+handoff_dir: handoff/
+playbooks_dir: playbooks/
+repo:
+branch: main
+context_file: CLAUDE.md
+MANIFEST
+    fi
+    plan "manifest.md created (stock team, $LATEST)"
+  fi
+
+  CP="$PROJECT/handoff/SESSION-CHECKPOINT.md"
+  if [ "$DRY" = 0 ]; then
+    mkdir -p "$PROJECT/handoff"
+    if [ -f "$CP" ] && grep -q "^version_notified:" "$CP"; then
+      backup "handoff/SESSION-CHECKPOINT.md"
+      sed_i "s/^version_notified:.*/version_notified: $LATEST/" "$CP"
+    else
+      backup "handoff/SESSION-CHECKPOINT.md"
+      printf '\n## Version Check\nversion_notified: %s\n' "$LATEST" >> "$CP"
+    fi
+  fi
+  plan "SESSION-CHECKPOINT.md — version_notified: $LATEST (no redundant update walk)"
+else
+  echo "— Role files: left untouched (personas and team names preserved)"
+  say "Your version markers were deliberately NOT updated. On your next session,"
+  say "the version check will see $LATEST and walk the remaining role-file"
+  say "upgrades with you — applying them to YOUR files, keeping your names."
+fi
+
+# --- done ---------------------------------------------------------------------
+echo ""
+echo "========================================="
+if [ "$DRY" = 1 ]; then
+  echo "  Dry run complete — nothing was changed."
+  echo "  Re-run without --dry-run to apply."
+else
+  echo "  Upgrade to $LATEST complete."
+  [ -d "$BACKUP" ] && echo "  Backups of edited files: $BACKUP"
+  echo ""
+  echo "  Next: open Claude Code in your project and type:"
+  echo ""
+  echo "  /architect"
+  if [ "$REPLACE" = 0 ]; then
+    echo ""
+    echo "  Arch will finish the role-file wiring with you interactively."
+  fi
+fi
+echo "========================================="
+echo ""

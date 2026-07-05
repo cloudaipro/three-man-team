@@ -59,7 +59,7 @@ if [ "$PROJECT_ROOT" = "/path/to/your/project" ]; then
   echo "  Arch will introduce the team and handle your project context file."
   echo "  After setup, every session starts with just /architect."
   echo ""
-  echo "  Full instructions: https://github.com/russelleNVy/three-man-team"
+  echo "  Full instructions: https://github.com/cloudaipro/three-man-team"
   echo ""
 else
   # Per-project install
