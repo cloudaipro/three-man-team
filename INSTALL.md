@@ -35,11 +35,15 @@ cp -r ~/.claude/skills/three-man-team/templates/project-folder/. /path/to/your/p
 cd /path/to/your/project
 ```
 
-Open Claude Code and paste:
+Open Claude Code and type:
 
 ```
-You are the Architect on this project. Please read new-setup.md.
+/tmt-setup
 ```
+
+(or paste: *You are the Architect on this project. Please read new-setup.md.*)
+
+After setup, every session starts with just `/architect`.
 
 ---
 
@@ -52,7 +56,7 @@ You are the Architect on this project. Please read new-setup.md.
 
 Three Man Team's setup script requires bash. On Windows, use Git Bash or WSL — the script will not run in PowerShell or Command Prompt.
 
-Manual setup alternative: copy the files from `templates/project-folder/` into your project directory yourself, then open Claude Code and paste:
+Manual setup alternative: copy the files from `templates/project-folder/` into your project directory yourself, then open Claude Code and type `/tmt-setup` (or paste):
 
 ```
 You are the Architect on this project. Please read new-setup.md.

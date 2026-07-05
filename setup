@@ -52,10 +52,12 @@ if [ "$PROJECT_ROOT" = "/path/to/your/project" ]; then
   echo "  Step 2 — Spin up Claude"
   echo "-----------------------------------------"
   echo ""
-  echo '  You are the Architect on this project. Please read new-setup.md.'
+  echo '  /tmt-setup'
   echo ""
-  echo "  Arch will introduce the team, handle your project context file,"
-  echo "  and give you the prompt to use every session going forward."
+  echo '  (or paste: You are the Architect on this project. Please read new-setup.md.)'
+  echo ""
+  echo "  Arch will introduce the team and handle your project context file."
+  echo "  After setup, every session starts with just /architect."
   echo ""
   echo "  Full instructions: https://github.com/russelleNVy/three-man-team"
   echo ""
@@ -80,11 +82,13 @@ else
   echo "  Step 2 — Start your first session"
   echo "-----------------------------------------"
   echo ""
-  echo '  Open Claude Code in your project folder and paste:'
+  echo '  Open Claude Code in your project folder and type:'
   echo ""
-  echo '  You are the Architect on this project. Please read new-setup.md.'
+  echo '  /tmt-setup'
   echo ""
-  echo "  Arch will introduce the team, help you set up your project context file,"
-  echo "  and tell you the prompt to use for every session going forward."
+  echo '  (or paste: You are the Architect on this project. Please read new-setup.md.)'
+  echo ""
+  echo "  Arch will introduce the team and help you set up your project context file."
+  echo "  After setup, every session starts with just /architect."
   echo ""
 fi

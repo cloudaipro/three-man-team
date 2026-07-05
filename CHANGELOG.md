@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.0 — 2026-07-05
+
+- Feature: slash commands ship in `.claude/commands/` (both template sets) — `/architect` starts or resumes the Architect session and optionally takes your first request as an argument (`/architect fix the login bug`); `/tmt-setup` runs first-time setup. Commands are role-neutral: `/architect` reads manifest.md to find renamed role files, so renamed teams need no edits
+- Improve: setup script, README, INSTALL.md, examples/session-start.md, new-setup closing message, and the checkpoint Resume Prompt all lead with the commands — classic paste prompts remain as manual fallback
+- Improve: new-setup CLAUDE.md snippet now includes "Start sessions with /architect" so the command stays discoverable in every future session
+- Fix: `.gitignore` — `templates/generic/.claude/` was swallowed by the global `.claude/` ignore rule; added override so generic-template command files actually ship
+- Change: distribution source — all version-check and raw-fetch URLs in shipped files (ARCHITECT.md ×2, new-setup.md ×2, /architect command ×2, releases v1.4.0/v1.5.0 how_to_assess) now point at `cloudaipro/three-man-team`; this fork is the release registry going forward (historical release docs left unchanged)
+
 ## v1.4.0 — 2026-07-05
 
 - Feature: `playbooks/` introduced — the Architect's planning judgment distilled into three on-demand files, shipped in both template sets. `PLANNING.md`: problem framing, verify-before-plan, two-options rule, risk-first step cutting, and the seven-question Pre-Flight Check that gates every Builder spin-up. `DIAGNOSIS.md`: read-don't-recall debugging protocol, second-cause check, two-strikes rule. `BRIEF-EXAMPLES.md`: annotated weak-vs-strong brief pair and horizontal-vs-vertical step cutting. Loaded at mode entry, never at session start — planning quality goes up, session cost doesn't. Files are role-neutral: renaming the team never touches them.

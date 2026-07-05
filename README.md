@@ -12,13 +12,12 @@
 
 ---
 
-## What's New — v1.4.0
+## What's New — v1.5.0
 
-- New: `playbooks/` — the Architect's planning discipline, written into three on-demand files. `PLANNING.md`: problem framing, step cutting, and the seven-question Pre-Flight Check that gates every build. `DIAGNOSIS.md`: the read-don't-recall debugging protocol and the two-strikes rule. `BRIEF-EXAMPLES.md`: annotated weak-vs-strong briefs. Loaded at the moment of use, never at session start — planning quality goes up, session cost doesn't.
-- New: brief template gains an Out of Scope section — most drift is a boundary that was never drawn.
-- New: BUILD-LOG gains a Lessons section — every bounced step becomes a one-line rule, so each mistake is only paid for once.
-- New: Builder refuses incomplete briefs — missing Out of Scope or unverifiable done-criteria get sent back before code is written. The discipline is enforced from both sides.
-- Improved: deploy gate now requires knowing the undo before the push.
+- New: slash commands — start every session by typing `/architect` (optionally with your first request: `/architect fix the login bug`). First-time setup is `/tmt-setup`. No more pasting boot prompts; the classic prompts remain as fallback.
+- The commands are role-neutral — they read `manifest.md` to find your role files, so renamed teams need no edits.
+
+**v1.4.0** added `playbooks/` — the Architect's planning discipline as on-demand files: `PLANNING.md` (problem framing, step cutting, the seven-question Pre-Flight Check that gates every build), `DIAGNOSIS.md` (read-don't-recall debugging, the two-strikes rule), `BRIEF-EXAMPLES.md` (annotated weak-vs-strong briefs) — plus Out of Scope in every brief, a Lessons section in BUILD-LOG, and a Builder that refuses incomplete briefs.
 
 See [all releases →](https://github.com/russelleNVy/three-man-team/releases)
 
@@ -110,13 +109,16 @@ cp -r ~/.claude/skills/three-man-team/templates/project-folder/. /path/to/your/p
 cd /path/to/your/project
 ```
 
-Open Claude Code and paste:
+Open Claude Code and type:
 
 ```
-You are the Architect on this project. Please read new-setup.md.
+/tmt-setup
 ```
 
-Arch will handle the rest — project context file, team names, and your first session prompt.
+(or paste: *You are the Architect on this project. Please read new-setup.md.*)
+
+Arch will handle the rest — project context file, team names, and from then on every
+session starts with just `/architect`.
 
 ---
 

@@ -42,6 +42,7 @@ Then introduce yourself and ask the three setup questions in a single message �
   ```
   ## Three Man Team
   Available agents: Arch (Architect), Bob (Builder), Richard (Reviewer)
+  Start sessions with /architect
   ```
 
 **If they don't have a project context file:**
@@ -52,12 +53,14 @@ Then introduce yourself and ask the three setup questions in a single message �
 
   ## Three Man Team
   Available agents: Arch (Architect), Bob (Builder), Richard (Reviewer)
+  Start sessions with /architect
   ```
 - Ask them: what are we building? Fill in the Project section together.
 
 **If they want to rename the team:**
 - Update ARCHITECT.md, BUILDER.md, and REVIEWER.md — replace the default names (Arch, Bob, Richard) with the new names.
 - The `playbooks/` files use role titles only (Architect, Builder, Reviewer) — they never need renaming. Leave them untouched.
+- The `.claude/commands/` files are role-neutral too — `/architect` reads manifest.md to find the renamed role file, so no edit is needed. If the user wants a command matching their custom name (e.g. `/sarah`), copy `.claude/commands/architect.md` to `.claude/commands/<name>.md`.
 - **Important:** Replace whole names only. Do not do a substring replace on role words like "Architect", "Builder", or "Reviewer" — those are role titles, not names. Only replace the shorthand names (Arch, Bob, Richard).
 - After updating, grep all three files for any mangled strings — look for new name + role title concatenated (e.g. "Billyitect", "Raylder", "Chriswer"). Fix any found before moving on.
 - Confirm the new names back to the user.
@@ -103,9 +106,9 @@ If they don't want RTK — keep going. They can install it any time.
 
 Before closing setup, fetch the current version:
 ```bash
-curl -s https://raw.githubusercontent.com/russelleNVy/three-man-team/main/releases/latest.json | jq -r '.version' 2>/dev/null
+curl -s https://raw.githubusercontent.com/cloudaipro/three-man-team/main/releases/latest.json | jq -r '.version' 2>/dev/null
 ```
-(Fallback without jq: `curl -s https://raw.githubusercontent.com/russelleNVy/three-man-team/main/releases/latest.json | grep -o '"version": *"[^"]*"' | cut -d'"' -f4`)
+(Fallback without jq: `curl -s https://raw.githubusercontent.com/cloudaipro/three-man-team/main/releases/latest.json | grep -o '"version": *"[^"]*"' | cut -d'"' -f4`)
 
 Create `manifest.md` in the project root with the values confirmed during setup:
 
@@ -136,8 +139,12 @@ Then write `version_notified: [fetched version]` to `handoff/SESSION-CHECKPOINT.
 
 Tell the user:
 
-> "Setup is done. From here, start every session with:
+> "Setup is done. From here, start every session by typing:
+> */architect*
+> That's it — it boots me with the right files every time. You can even hand me your first
+> request in the same line: */architect fix the login bug*.
+> If you're ever in a tool without slash commands, the manual prompt is:
 > *You are the Architect on this project. Read [your project file], then ARCHITECT.md.*
-> That's your prompt going forward. This new-setup.md file is no longer needed."
+> This new-setup.md file is no longer needed."
 
 Then ask: what are we building first?

@@ -3,14 +3,26 @@
 ## First-time setup
 
 ```
-You are the Architect on this project. Please read new-setup.md.
+/tmt-setup
 ```
 
-Arch will introduce the team, handle your project context file, and give you the prompt to use every session going forward.
+Arch will introduce the team, handle your project context file, and set you up for every session going forward. (No slash commands in your tool? Paste: *You are the Architect on this project. Please read new-setup.md.*)
 
 ---
 
 ## Architect Session (every session after setup)
+
+```
+/architect
+```
+
+You can hand Arch your first request in the same line:
+
+```
+/architect the login page 500s on wrong passwords
+```
+
+Manual fallback:
 
 ```
 You are [Architect name] on this project.
@@ -38,8 +50,12 @@ Write your findings to REVIEW-FEEDBACK.md.
 
 ## Resuming After a Break
 
-If SESSION-CHECKPOINT.md exists and is recent, use the resume prompt inside it.
-Otherwise:
+```
+/architect
+```
+
+The role file's Session Start is checkpoint-first — a recent SESSION-CHECKPOINT.md gets
+picked up automatically, and BUILD-LOG covers the rest. Manual fallback:
 
 ```
 You are [Architect name] on this project.

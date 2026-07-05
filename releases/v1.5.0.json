@@ -1,0 +1,30 @@
+{
+  "version": "v1.5.0",
+  "released": "2026-07-05",
+  "from_version": "v1.4.0",
+  "arch_opening": "There is an update available — version 1.5.0. It's a small quality-of-life one: slash commands. Instead of pasting the session prompt every time, you type /architect — that's the whole thing. I'll check your setup and add the command files if you want them.",
+  "changes": [
+    {
+      "id": "slash-commands-introduced",
+      "type": "feature",
+      "title": "Slash commands — /architect and /tmt-setup",
+      "what_changed": "Two command files now ship in .claude/commands/ with every install. /architect starts or resumes the Architect session — it reads manifest.md to find the role file, follows Session Start, and optionally takes the Project Owner's first request as an argument (/architect fix the login bug). /tmt-setup runs first-time setup. Both are role-neutral, so renamed teams need no edits.",
+      "old_behavior": "Every session started by pasting a multi-line boot prompt: 'You are the Architect on this project. Read [project file], then ARCHITECT.md.'",
+      "new_behavior": "Type /architect. The command routes through manifest.md to the right role file regardless of team names.",
+      "user_impact_plain": "Starting a session goes from pasting two lines you had to keep somewhere to typing one word.",
+      "how_to_assess": "Check whether .claude/commands/architect.md and .claude/commands/tmt-setup.md exist in the project root. If not: after the user updates their framework clone (git pull), copy templates/project-folder/.claude/commands/ into the project's .claude/commands/. If the clone is not available, fetch the two raw files from https://raw.githubusercontent.com/cloudaipro/three-man-team/main/templates/project-folder/.claude/commands/ . No edits needed for renamed teams — the commands are role-neutral. If the user renamed their team and wants a command matching the custom name, copy architect.md to <name>.md.",
+      "user_decision": "Want me to add the /architect and /tmt-setup commands to this project? From then on you start every session by typing /architect."
+    },
+    {
+      "id": "resume-prompt-simplified",
+      "type": "improvement",
+      "title": "Checkpoint Resume Prompt leads with /architect",
+      "what_changed": "The SESSION-CHECKPOINT.md template's Resume Prompt section now says 'Type /architect to resume' with the classic paste prompt kept as manual fallback.",
+      "old_behavior": "Resume Prompt only offered the multi-line paste prompt.",
+      "new_behavior": "Resume is one word; the paste prompt remains for tools without slash commands.",
+      "user_impact_plain": "Resuming after a break is /architect — the checkpoint gets picked up automatically by Session Start.",
+      "how_to_assess": "Read the user's handoff/SESSION-CHECKPOINT.md Resume Prompt section. If it only shows the paste prompt, offer to update the phrasing to lead with /architect. Only applies if they took the slash-commands change above.",
+      "user_decision": "Want me to update your checkpoint's Resume Prompt to lead with /architect?"
+    }
+  ]
+}

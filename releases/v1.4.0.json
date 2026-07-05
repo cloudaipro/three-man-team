@@ -12,7 +12,7 @@
       "old_behavior": "Planning quality depended entirely on the model running the Architect session. No written planning discipline existed.",
       "new_behavior": "The Architect loads the playbook matching the current mode and follows its protocol. The Pre-Flight Check must be answered in writing before every Builder spin-up.",
       "user_impact_plain": "Your Architect plans like a stronger model — the judgment is in the files, so it holds up even on smaller or faster models.",
-      "how_to_assess": "Check whether a playbooks/ directory with PLANNING.md, DIAGNOSIS.md, and BRIEF-EXAMPLES.md exists in the project root. If not: after the user updates their framework clone (git pull), copy templates/project-folder/playbooks/ into the project root. If the clone is not available, fetch the three raw files from https://raw.githubusercontent.com/russelleNVy/three-man-team/main/templates/project-folder/playbooks/ . The files are role-neutral — no renaming needed regardless of the user's team names.",
+      "how_to_assess": "Check whether a playbooks/ directory with PLANNING.md, DIAGNOSIS.md, and BRIEF-EXAMPLES.md exists in the project root. If not: after the user updates their framework clone (git pull), copy templates/project-folder/playbooks/ into the project root. If the clone is not available, fetch the three raw files from https://raw.githubusercontent.com/cloudaipro/three-man-team/main/templates/project-folder/playbooks/ . The files are role-neutral — no renaming needed regardless of the user's team names.",
       "user_decision": "This adds three playbook files that upgrade planning quality on every future step. Want me to install them into your project now?"
     },
     {

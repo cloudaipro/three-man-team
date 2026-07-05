@@ -23,7 +23,7 @@
 
 ## Resume Prompt
 
-Copy and paste this to resume:
+Type `/architect` to resume. Manual fallback — copy and paste:
 
 ---
 
