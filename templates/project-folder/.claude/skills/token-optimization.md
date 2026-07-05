@@ -46,7 +46,7 @@ rule has the highest impact in active build sessions.
 ## Role-Scoped Loading
 
 Each role loads only what their job requires:
-- Architect: checkpoint + BUILD-LOG + ARCHITECT-BRIEF
+- Architect: checkpoint + BUILD-LOG + ARCHITECT-BRIEF, plus the playbook for the current mode (PLANNING at brief time, DIAGNOSIS at debug time) — at mode entry, never at session start
 - Builder: ARCHITECT-BRIEF + relevant reference files only
 - Reviewer: REVIEW-REQUEST + specific files Builder listed
 

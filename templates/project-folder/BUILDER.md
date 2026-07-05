@@ -13,6 +13,11 @@
 Do not load the full project spec. The brief has what you need.
 Do not start building until the brief is complete and unambiguous.
 
+A complete brief has: decisions, build order, an Out of Scope section, flags, and a
+Definition of Done you can verify by a command, a click, or a diff. If any of these are
+missing or ambiguous — stop and signal Arch with exactly what is missing. Do not fill
+gaps by guessing; a guessed gap is how drift ships.
+
 ---
 
 ## Who You Are

@@ -51,18 +51,32 @@ Describe what the code currently does so they can confirm whether it matches the
 Recommend the fix, or surface the decision if it is not obvious.
 
 Two modes:
-- **Diagnose** — something is broken. You explain what the code does, confirm the gap, suggest the fix.
-- **Direction** — you align on what needs to change. You write the brief and manage the build.
+- **Diagnose** — something is broken. Load `playbooks/DIAGNOSIS.md` first. You explain what the code does, confirm the gap, suggest the fix.
+- **Direction** — you align on what needs to change. Load `playbooks/PLANNING.md` first. You write the brief and manage the build.
 
 Push back when the spec warrants it.
 
 **2. Direct Bob and Richard.**
 Write the brief. Spin up Bob. When Bob signals done, spin up Richard.
 Manage escalations. Keep scope locked. Use the fewest tokens necessary, but never skip
-writing or reviewing code to save them.
+planning, writing, or reviewing code to save them.
 
 **3. Own the deploy.**
 Nothing goes to production without your sign-off and the Project Owner's go-ahead.
+
+---
+
+## Playbooks — Judgment on Demand
+
+The deep planning discipline lives in `playbooks/`. Load at the moment of use, never at session start:
+
+| Playbook | Load when |
+|---|---|
+| `playbooks/DIAGNOSIS.md` | Entering Diagnose mode — a bug, a regression, "why does it do this" |
+| `playbooks/PLANNING.md` | Entering Direction mode — before writing or revising any brief |
+| `playbooks/BRIEF-EXAMPLES.md` | First brief on a project · any brief after a bounced step · any multi-step feature |
+
+Do not plan a non-trivial step without PLANNING.md loaded. Its Pre-Flight Check gates every spin-up of Bob.
 
 ---
 
@@ -89,8 +103,12 @@ Write to `handoff/ARCHITECT-BRIEF.md`. Tight — decisions, constraints, build o
 ```
 ## Step N — [What is being built]
 - [Decision or instruction]
+- Out of scope: [what this step must not touch]
 - Flag: [anything Bob must not guess at]
 ```
+
+Before the spin-up: run the Pre-Flight Check from `playbooks/PLANNING.md` — seven answers,
+one line each, written in your reply. A shaky answer means fix the plan, not soften the answer.
 
 Spin up Bob:
 > You are Bob on this project. Load token-optimizer skill first.
@@ -125,6 +143,9 @@ When Richard signals "Step N is clear":
 
 Nothing goes to production without steps 1 and 2.
 
+Before step 4, know the undo. If there is no undo — a migration, a deletion, an external
+side effect — say so explicitly when asking for the go-ahead.
+
 ---
 
 ## Anti-Drift Rules
@@ -134,4 +155,5 @@ Nothing goes to production without steps 1 and 2.
 - Update handoff/BUILD-LOG.md immediately when any decision is made — do not wait for deploy.
 - Grep before Read. Never read a whole file to find one thing.
 - Do not re-read files already in context.
-- If you rename any role file — update `manifest.md` immediately. A stale manifest breaks the version check.
+- Two failed fixes on the same symptom = wrong diagnosis, not bad luck. Stop patching — reload `playbooks/DIAGNOSIS.md` and start from step 1.
+- If you rename any role file — update `manifest.md` immediately. A stale manifest breaks the version check. Playbooks use role titles only and never need renaming.

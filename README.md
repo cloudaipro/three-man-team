@@ -12,12 +12,13 @@
 
 ---
 
-## What's New — v1.3.0
+## What's New — v1.4.0
 
-- New: `manifest.md` — Arch generates this at first-time setup. Single source of truth for your install: team names, role filenames, handoff directory, repo, branch.
-- Improved: version check now reads a version registry (`releases/latest.json`) instead of hitting the GitHub API. Critical updates are mandatory checkpoints; non-critical ones are your choice.
-- Improved: Arch reads your actual files before walking through any change — no more guessing at your setup.
-- Removed: `VERSION` file retired. Version lives in `manifest.md`.
+- New: `playbooks/` — the Architect's planning discipline, written into three on-demand files. `PLANNING.md`: problem framing, step cutting, and the seven-question Pre-Flight Check that gates every build. `DIAGNOSIS.md`: the read-don't-recall debugging protocol and the two-strikes rule. `BRIEF-EXAMPLES.md`: annotated weak-vs-strong briefs. Loaded at the moment of use, never at session start — planning quality goes up, session cost doesn't.
+- New: brief template gains an Out of Scope section — most drift is a boundary that was never drawn.
+- New: BUILD-LOG gains a Lessons section — every bounced step becomes a one-line rule, so each mistake is only paid for once.
+- New: Builder refuses incomplete briefs — missing Out of Scope or unverifiable done-criteria get sent back before code is written. The discipline is enforced from both sides.
+- Improved: deploy gate now requires knowing the undo before the push.
 
 See [all releases →](https://github.com/russelleNVy/three-man-team/releases)
 

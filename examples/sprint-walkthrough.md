@@ -16,16 +16,26 @@ Project Owner: "Both. JS for UX, server-side for security."
 
 ## 3. Architect writes the brief
 
-Updates ARCHITECT-BRIEF.md:
+Architect loads `playbooks/PLANNING.md`, then updates ARCHITECT-BRIEF.md:
 
 ```
 ## Step 12 — Server-side email validation on registration
 - Add server-side email format validation to the registration handler
 - Validate after sanitization, before DB write
-- Return error message matching the existing error format
+- Return error message matching the existing error format (verified: errors.js respondError)
 - JS validation already exists — do not modify it
+- Out of scope: existing stored emails, deliverability checks, any other form fields
 - Flag: use the framework's built-in validator, not a custom regex
 ```
+
+Then answers the Pre-Flight Check in the chat — seven lines, for example:
+
+> 3. Riskiest assumption: the framework validator accepts everything the JS regex accepts —
+>    verified against its docs, so no user who passes the client check gets blocked.
+> 6. Verification: POST /register with `user@gmial` → 422, error JSON matches existing shape;
+>    valid email → 200 and row written.
+> 7. User-visible change: server now rejects bad emails the client missed — that is the specced
+>    intent, nothing else changes.
 
 ## 4. Architect spins up Builder
 

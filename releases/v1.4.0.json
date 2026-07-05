@@ -1,0 +1,63 @@
+{
+  "version": "v1.4.0",
+  "released": "2026-07-05",
+  "from_version": "v1.3.0",
+  "arch_opening": "There is an update available — version 1.4.0. This one upgrades how I plan. It adds playbooks — the planning and diagnosis discipline written into files I load at the moment of use, plus a pre-flight check that gates every build. I will look at your actual files and tell you exactly what applies to you. Should take a few minutes.",
+  "changes": [
+    {
+      "id": "playbooks-introduced",
+      "type": "feature",
+      "title": "playbooks/ introduced — planning judgment as files",
+      "what_changed": "Three playbook files now ship with every install: playbooks/PLANNING.md (problem framing, verify-before-plan, two-options rule, step cutting, the seven-question Pre-Flight Check), playbooks/DIAGNOSIS.md (read-don't-recall debugging protocol, second-cause check, two-strikes rule), playbooks/BRIEF-EXAMPLES.md (annotated weak-vs-strong briefs and horizontal-vs-vertical step cutting). They load at the moment of use — Direction mode, Diagnose mode, brief writing — never at session start.",
+      "old_behavior": "Planning quality depended entirely on the model running the Architect session. No written planning discipline existed.",
+      "new_behavior": "The Architect loads the playbook matching the current mode and follows its protocol. The Pre-Flight Check must be answered in writing before every Builder spin-up.",
+      "user_impact_plain": "Your Architect plans like a stronger model — the judgment is in the files, so it holds up even on smaller or faster models.",
+      "how_to_assess": "Check whether a playbooks/ directory with PLANNING.md, DIAGNOSIS.md, and BRIEF-EXAMPLES.md exists in the project root. If not: after the user updates their framework clone (git pull), copy templates/project-folder/playbooks/ into the project root. If the clone is not available, fetch the three raw files from https://raw.githubusercontent.com/russelleNVy/three-man-team/main/templates/project-folder/playbooks/ . The files are role-neutral — no renaming needed regardless of the user's team names.",
+      "user_decision": "This adds three playbook files that upgrade planning quality on every future step. Want me to install them into your project now?"
+    },
+    {
+      "id": "architect-playbook-wiring",
+      "type": "improvement",
+      "title": "Architect role file wired to the playbooks",
+      "what_changed": "ARCHITECT.md gains: a Playbooks load-trigger table (which playbook to load when), playbook load pointers on the Diagnose and Direction mode bullets, a required written Pre-Flight Check before every Builder spin-up, a two-strikes rule in Anti-Drift (two failed fixes on one symptom = wrong diagnosis, restart from DIAGNOSIS.md), a deploy-gate rule to know the undo before pushing — and to say so explicitly when there is none — and the token rule amended to never skip planning, writing, or reviewing code.",
+      "old_behavior": "The Architect role file described the jobs but not the planning procedure. Nothing gated the spin-up of Builder.",
+      "new_behavior": "The role file routes to the right playbook at the right moment, and the Pre-Flight Check gates every build.",
+      "user_impact_plain": "Fewer bounced reviews and fewer wrong-target builds — the expensive planning mistakes get caught before Builder starts.",
+      "how_to_assess": "Read the user's Architect role file. Does it contain a 'Playbooks' section with a load-trigger table, a Pre-Flight Check requirement in the Builder briefing section, a two-strikes rule in Anti-Drift, and the know-the-undo line in the Deploy Gate? If any are missing, apply the corresponding edits from templates/project-folder/ARCHITECT.md (or templates/generic/ARCHITECT.md if they built from the generic set), preserving the user's custom names and personas.",
+      "user_decision": "Your Architect role file predates the playbooks. Want me to wire it up? Four small edits, and your custom names and personas stay untouched."
+    },
+    {
+      "id": "builder-brief-gate",
+      "type": "improvement",
+      "title": "Builder refuses incomplete briefs",
+      "what_changed": "BUILDER.md now defines what a complete brief is — decisions, build order, an Out of Scope section, flags, and a Definition of Done verifiable by a command, a click, or a diff — and requires the Builder to stop and signal the Architect with exactly what is missing, instead of filling gaps by guessing.",
+      "old_behavior": "Builder was told not to start until the brief was 'complete and unambiguous', with no definition of complete. An under-specified brief got quietly interpreted.",
+      "new_behavior": "Completeness is a checklist. A missing section is a stop-and-signal, not a guess.",
+      "user_impact_plain": "The planning discipline is enforced from both sides — even a rushed brief gets caught before any code is written.",
+      "how_to_assess": "Read the user's Builder role file. Does the Session Start section define the complete-brief checklist and the stop-and-signal rule? If not, apply the edit from templates/project-folder/BUILDER.md (or templates/generic/BUILDER.md), preserving the user's custom names and personas.",
+      "user_decision": "Your Builder accepts briefs without checking them for completeness. Want me to add the gate? One small edit."
+    },
+    {
+      "id": "brief-out-of-scope",
+      "type": "improvement",
+      "title": "Brief template gains Out of Scope and observable Definition of Done",
+      "what_changed": "handoff/ARCHITECT-BRIEF.md now has an Out of Scope section, and the Definition of Done placeholders now require criteria checkable by a command, a click, or a diff.",
+      "old_behavior": "Briefs had no explicit boundary section. Done-criteria said 'verifiable' without defining what that means.",
+      "new_behavior": "Every brief draws the boundary of what must not be touched, and every done-criterion is an observable check.",
+      "user_impact_plain": "Most scope drift is a boundary that was never drawn — this draws it in every brief, and makes 'done' something you can actually verify at the deploy gate.",
+      "how_to_assess": "Read the user's handoff/ARCHITECT-BRIEF.md (or their current brief file per manifest.md). Does it have an Out of Scope section? If not, offer to add it between Build Order and Flags, and update the Definition of Done placeholder wording.",
+      "user_decision": "Your brief template has no Out of Scope section. Want me to add it? One small edit to the template."
+    },
+    {
+      "id": "build-log-lessons",
+      "type": "improvement",
+      "title": "BUILD-LOG gains a Lessons section — the team learns from every bounce",
+      "what_changed": "handoff/BUILD-LOG.md gains a Lessons section: one line per bounced step or missed intent — what went wrong and which check would have caught it. The Architect reads it before writing each new brief (required by the Pre-Flight Check). Architecture Decisions now also record the why with each decision.",
+      "old_behavior": "Bounced steps were fixed and forgotten. The same planning mistake could recur every few steps. Architecture decisions were recorded without reasons.",
+      "new_behavior": "Every bounce becomes a standing one-line rule the Architect checks against before each brief. Decisions carry their reasons so future sessions don't re-litigate them.",
+      "user_impact_plain": "Your project accumulates its own judgment over time — each mistake is only paid for once.",
+      "how_to_assess": "Read the user's handoff/BUILD-LOG.md. Does it have a '## Lessons' section? If not, offer to add it between Known Gaps and Architecture Decisions. Also check whether Architecture Decisions entries record a reason — suggest the [Decision — why — date] format going forward without rewriting existing entries.",
+      "user_decision": "Your BUILD-LOG has no Lessons section. Want me to add it? Your project starts learning from its own bounces immediately."
+    }
+  ]
+}

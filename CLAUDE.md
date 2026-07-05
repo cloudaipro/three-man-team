@@ -35,4 +35,7 @@ Do not re-read files already in context this session.
 | BUILD-LOG.md | Architect checks status; Builder updates when done |
 | REVIEW-REQUEST.md | Reviewer loads at review start |
 | REVIEW-FEEDBACK.md | Builder loads after Reviewer signals done |
+| playbooks/PLANNING.md | Architect enters Direction mode — before any brief |
+| playbooks/DIAGNOSIS.md | Architect enters Diagnose mode |
+| playbooks/BRIEF-EXAMPLES.md | First brief · after a bounced step · multi-step feature |
 

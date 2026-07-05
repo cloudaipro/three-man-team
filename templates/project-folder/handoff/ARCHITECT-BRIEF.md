@@ -14,12 +14,15 @@
 1. [First thing to build]
 2. [Second thing]
 
+### Out of Scope
+- [What this step must not touch. Draw the boundary — Builder cannot respect a line that was never drawn.]
+
 ### Flags
 - Flag: [anything Builder must not guess at]
 
 ### Definition of Done
-- [ ] [Verifiable completion criterion]
-- [ ] [Verifiable completion criterion]
+- [ ] [Observable criterion — checkable by a command, a click, or a diff. "Works" is not a criterion.]
+- [ ] [Observable criterion]
 
 ---
 

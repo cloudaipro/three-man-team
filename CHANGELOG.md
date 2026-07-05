@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.0 — 2026-07-05
+
+- Feature: `playbooks/` introduced — the Architect's planning judgment distilled into three on-demand files, shipped in both template sets. `PLANNING.md`: problem framing, verify-before-plan, two-options rule, risk-first step cutting, and the seven-question Pre-Flight Check that gates every Builder spin-up. `DIAGNOSIS.md`: read-don't-recall debugging protocol, second-cause check, two-strikes rule. `BRIEF-EXAMPLES.md`: annotated weak-vs-strong brief pair and horizontal-vs-vertical step cutting. Loaded at mode entry, never at session start — planning quality goes up, session cost doesn't. Files are role-neutral: renaming the team never touches them.
+- Improve: ARCHITECT.md (both templates) wired to the playbooks — load-trigger table, written Pre-Flight Check required before spinning up Builder, two-strikes rule added to Anti-Drift, deploy gate now requires knowing the undo before the push (and saying so when there is none)
+- Improve: ARCHITECT-BRIEF.md template gains an Out of Scope section; Definition of Done placeholders now require criteria checkable by a command, a click, or a diff
+- Improve: BUILD-LOG.md template gains a Lessons section — one line per bounced step, read before each new brief; Architecture Decisions entries now record the why alongside the decision
+- Improve: BUILDER.md (both templates) — complete-brief checklist added; Builder stops and signals the Architect when the brief is missing Out of Scope or an observable Definition of Done, instead of filling gaps by guessing — the planning discipline is enforced from both sides
+- Improve: ARCHITECT.md Job 1 modes now name the playbook to load (Diagnose → DIAGNOSIS.md, Direction → PLANNING.md); token rule amended to "never skip planning, writing, or reviewing code"
+- Improve: new-setup.md — manifest gains `playbooks_dir`; rename instructions note that playbooks never need renaming
+- Docs: token-optimization.md documents playbook loading as part of role-scoped loading; sprint-walkthrough example updated to show Out of Scope and the Pre-Flight Check in action
+
 ## v1.3.0 — 2026-06-04
 
 - Feature: manifest.md introduced — new-setup.md now generates manifest.md at first-time setup capturing team names, role filenames, handoff dir, repo, and installed version
