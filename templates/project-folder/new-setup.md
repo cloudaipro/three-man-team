@@ -80,7 +80,7 @@ Then introduce yourself and ask the three setup questions in a single message �
 
 **If they want specific models per agent:**
 - Note the desired model for each agent as a comment in ARCHITECT.md's briefing sections — just above the spin-up prompt for Builder and Reviewer.
-- When spinning up agents via the Agent tool, pass the `model` parameter. Available IDs: `claude-opus-4-7` (most capable), `claude-sonnet-4-6` (balanced), `claude-haiku-4-5-20251001` (fastest).
+- When spinning up agents via the Agent tool, pass the `model` parameter. Use the version-stable aliases: `opus` (most capable), `sonnet` (balanced), `haiku` (fastest) — each always resolves to the newest model of its tier. Record aliases, never dated model IDs — dated IDs go stale.
 - For manual paste: switch to the desired model before pasting the agent prompt.
 
 **If they don't care about model assignment:**

@@ -6,6 +6,7 @@
 - Improve: setup script, README, INSTALL.md, examples/session-start.md, new-setup closing message, and the checkpoint Resume Prompt all lead with the commands — classic paste prompts remain as manual fallback
 - Improve: new-setup CLAUDE.md snippet now includes "Start sessions with /architect" so the command stays discoverable in every future session
 - Fix: `.gitignore` — `templates/generic/.claude/` was swallowed by the global `.claude/` ignore rule; added override so generic-template command files actually ship
+- Fix: briefing sections and new-setup no longer hardcode dated model IDs — replaced with the version-stable aliases `opus` / `sonnet` / `haiku`, which always resolve to the newest model of each tier
 - Change: distribution source — all version-check and raw-fetch URLs in shipped files (ARCHITECT.md ×2, new-setup.md ×2, /architect command ×2, releases v1.4.0/v1.5.0 how_to_assess) now point at `cloudaipro/three-man-team`; this fork is the release registry going forward (historical release docs left unchanged); README/INSTALL/setup clone commands follow
 - Tooling: `./upgrade` script — upgrades an existing project install to the clone's version. Safe by default (additive installs, backups, live handoff data and personas untouched, version markers left stale so the next session's update walk finishes role-file wiring interactively); `--replace-role-files` for stock installs (refused on renamed/customized ones); `--dry-run` to preview
 

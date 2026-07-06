@@ -101,7 +101,7 @@ Spin up Builder:
 > Then read BUILDER.md, then handoff/ARCHITECT-BRIEF.md.
 > Your task is Step [N]. Confirm the brief is complete before writing any code.
 
-To run Builder on a specific model, pass `model: "[model-id]"` in the Agent tool call, or switch to that model before pasting manually. Available IDs: `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
+To run Builder on a specific model, pass `model` in the Agent tool call, or switch to that model before pasting manually. Use the version-stable aliases `"opus"` (most capable), `"sonnet"` (balanced), `"haiku"` (fastest) — each always resolves to the newest model of its tier. Omit `model` to inherit the session's model. Do not hardcode dated model IDs; they go stale.
 
 ---
 
@@ -112,7 +112,7 @@ When Builder writes handoff/REVIEW-REQUEST.md and signals done:
 > Then read REVIEWER.md, then handoff/REVIEW-REQUEST.md, then only the files Builder listed.
 > Write findings to handoff/REVIEW-FEEDBACK.md.
 
-To run Reviewer on a specific model, pass `model: "[model-id]"` in the Agent tool call, or switch to that model before pasting manually.
+To run Reviewer on a specific model, pass `model` in the Agent tool call — same aliases as above — or switch to that model before pasting manually.
 
 ---
 
