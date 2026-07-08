@@ -1,0 +1,36 @@
+{
+  "latest": "v1.5.0",
+  "versions": [
+    {
+      "version": "v1.5.0",
+      "released": "2026-07-05",
+      "critical": false
+    },
+    {
+      "version": "v1.4.0",
+      "released": "2026-07-05",
+      "critical": false
+    },
+    {
+      "version": "v1.3.0",
+      "released": "2026-06-05",
+      "critical": true,
+      "reason": "Introduces manifest.md — required for all future version checks"
+    },
+    {
+      "version": "v1.2.5",
+      "released": "2026-06-04",
+      "critical": false
+    },
+    {
+      "version": "v1.2.4",
+      "released": "2026-05-27",
+      "critical": false
+    },
+    {
+      "version": "v1.2.3",
+      "released": "2026-05-03",
+      "critical": false
+    }
+  ]
+}

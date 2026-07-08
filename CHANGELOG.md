@@ -99,3 +99,15 @@ Initial public release.
 - RTK integration guidance in docs/token-optimization.md
 - Setup script with CLAUDE.md instructions printed on install
 - Full documentation suite
+
+## v1.6.0 — 2026-07-07
+
+- Feature: Codex skill integration (`codex-skill/`) — full Three Man Team methodology adapted as a Codex skill package. Includes SKILL.md with description-triggered invocation, playbooks as reference files, role templates adapted for Codex's `spawn_agent` (Builder → worker, Reviewer → default), token-optimization reference, project scaffolding script, and local version checker
+- Feature: `scripts/setup-project.sh` — scaffolds AGENTS.md (Codex session router), role file stubs, and the full handoff template set into any project directory; sets up .gitignore for handoff files
+- Feature: `scripts/check-version.py` — lightweight local version checker comparing manifest.md against bundled releases registry (sandbox-safe, no network calls)
+- Improve: README.md — added Codex Integration section with component table, adaptation guide, install instructions, and workflow overview
+- New asset: `codex-skill/agents/openai.yaml` — UI metadata for skill discovery in Codex
+- New asset: `codex-skill/templates/project/AGENTS.md` — Codex-compatible session router with token rules and team table
+- Feature: `setup-project.sh` now supports `--plugin` flag to register `@three-man-team` Codex plugin, and `--plugin-only` flag for plugin-only installs — enables `@three-man-team` mention trigger in any Codex CLI session
+- New asset: `templates/plugin/.codex-plugin/plugin.json` and `templates/plugin/.app.json` — plugin manifest and App definition for `@three-man-team` mention support
+- Improve: README.md — updated setup docs for `--plugin`/`--plugin-only` flags, added "How to trigger in Codex CLI" section documenting `@three-man-team` mention and description matching

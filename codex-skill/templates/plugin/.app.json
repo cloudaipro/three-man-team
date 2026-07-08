@@ -1,0 +1,25 @@
+{
+  "apps": {
+    "three-man-team": {
+      "name": "three-man-team",
+      "title": "Three Man Team",
+      "description": "Structured software development with Architect, Builder, and Reviewer roles — plan, build, review, deploy with playbook-driven discipline.",
+      "skills": "./skills/",
+      "interface": {
+        "displayName": "Three Man Team",
+        "shortDescription": "Architect → Builder → Reviewer workflow for structured coding",
+        "longDescription": "Transform your Codex session into a structured three-agent team. You are the Architect — plan with playbooks, write structured briefs, spawn Builder and Reviewer sub-agents, and gate deploys through review. Includes Pre-Flight Check planning discipline, diagnosis protocol, brief calibration examples, and token-optimization rules.",
+        "developerName": "Three Man Team",
+        "category": "Productivity",
+        "capabilities": ["Write", "Read"],
+        "defaultPrompt": [
+          "I need to plan and build a feature with Three Man Team — Architect, Builder, Reviewer",
+          "Use the Three Man Team methodology for this task",
+          "I want to start a TMT session — write a brief, spin up Builder and Reviewer",
+          "Help me diagnose a bug using the TMT playbook"
+        ],
+        "brandColor": "#2563EB"
+      }
+    }
+  }
+}

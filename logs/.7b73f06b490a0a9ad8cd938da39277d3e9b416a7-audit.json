@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/alex/data/work/three-man-team/logs/.7b73f06b490a0a9ad8cd938da39277d3e9b416a7-audit.json",
+    "files": [
+        {
+            "date": 1783468086203,
+            "name": "/Users/alex/data/work/three-man-team/logs/mcp-puppeteer-2026-07-07.log",
+            "hash": "694cc7a3960cf91e9508b3fc241f82f47f8101e67b39b5189f21b15f5b83fdde"
+        }
+    ],
+    "hashType": "sha256"
+}

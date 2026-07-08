@@ -226,3 +226,94 @@ MIT. Free forever.
 Russell Aaron — 20+ years building and supporting software the right way. He built this team
 in production shipping a real SaaS platform. It works because it was used before it was
 published, fine tuned, and will continue to get better over time as AI models and tools evolve.
+
+---
+
+## Codex Integration
+
+Three Man Team ships as a [Codex skill](https://github.com/openai/skills) — the full methodology adapted for Codex's architecture. The skill runs in any Codex session: you are the Architect, and you spawn Builder and Reviewer as sub-agents using Codex's `spawn_agent` function.
+
+### What's in the skill
+
+Installed at `codex-skill/` in this repo:
+
+| Component | Path | Purpose |
+|---|---|---|
+| `SKILL.md` | `codex-skill/SKILL.md` | Trigger description + full methodology adapted for Codex's `spawn_agent` model |
+| **Playbooks** | `codex-skill/references/playbooks/` | PLANNING.md (Pre-Flight Check, step cutting), DIAGNOSIS.md (debugging protocol), BRIEF-EXAMPLES.md (annotated briefs) |
+| **Role templates** | `codex-skill/references/role-templates/` | ARCHITECT.md, BUILDER.md, REVIEWER.md — adapted for Codex's worker/default agent types |
+| **Token optimizer** | `codex-skill/references/token-optimization.md` | Five token-discipline rules + grep-before-read |
+| **Setup script** | `codex-skill/scripts/setup-project.sh` | Scaffolds AGENTS.md, role stubs, handoff templates into a project |
+| **Version checker** | `codex-skill/scripts/check-version.py` | Compares local manifest against bundled release registry (no network needed) |
+| **Project templates** | `codex-skill/templates/project/` | AGENTS.md (session router), manifest.md (version tracking) |
+
+### Key adaptations for Codex
+
+| Dimension | Claude Code TMT | Codex TMT Skill |
+|---|---|---|
+| **Session boot** | Slash commands (`/architect`) | Skill triggers on structured work keywords |
+| **Builder spawn** | Claude Code Agent tool | `spawn_agent(agent_type: "worker")` |
+| **Reviewer spawn** | Claude Code Agent tool | `spawn_agent(agent_type: "default")` |
+| **Session router** | CLAUDE.md | AGENTS.md |
+| **Version check** | curl to GitHub API | `check-version.py` (local, sandbox-safe) |
+| **Playbook paths** | `playbooks/` | `references/playbooks/` (inside skill dir) |
+
+### Install the skill
+
+The skill is pre-installed in this repo. To use it in your Codex environment:
+
+```bash
+# Copy the skill into your Codex skills directory
+cp -R codex-skill ~/.codex/skills/three-man-team
+```
+
+Restart Codex to pick up the new skill. It will trigger automatically when your task involves structured software development, planning, multi-step builds, or review — or when you mention "three man team", "TMT", or any role name.
+
+### Set up a project
+
+The setup script scaffolds project files and optionally registers the Codex plugin:
+
+```bash
+# Project files only (AGENTS.md, role stubs, handoff templates)
+~/.codex/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
+
+# Project files + @three-man-team Codex plugin
+~/.codex/skills/three-man-team/scripts/setup-project.sh /path/to/your/project --plugin
+
+# Codex plugin only (adds @three-man-team mention to Codex CLI)
+~/.codex/skills/three-man-team/scripts/setup-project.sh --plugin-only
+```
+
+Project files: `AGENTS.md` (session router), role stubs, and a full set of `handoff/` templates. Customize the role files with your team's names and personas.
+
+The `--plugin` flag installs a Codex plugin at `~/.agents/plugins/plugins/three-man-team/` with an App definition, enabling `@three-man-team` mention in any Codex CLI session. The `--plugin-only` flag skips project files and only registers the plugin — useful if your project is already set up.
+
+### How to trigger in Codex CLI
+
+**`@three-man-team` mention** — the fastest way. Installed as a Codex plugin with App definition:
+
+```
+@three-man-team I need to build a login feature, plan it out
+@three-man-team let's add email validation to the registration endpoint
+```
+
+**Description matching** — the skill also activates automatically when you mention structured work:
+
+```
+Use Three Man Team to plan this feature
+Be the Architect and help me design this
+```
+
+### How the workflow looks in Codex
+
+```
+You describe a problem
+  → Architect (you) loads playbooks, writes brief to handoff/ARCHITECT-BRIEF.md
+  → Spawn Builder: implement Step N, update BUILD-LOG, write REVIEW-REQUEST
+  → Spawn Reviewer: read REVIEW-REQUEST, review the diff, write REVIEW-FEEDBACK
+  → Deploy gate: report, commit, log, write SESSION-CHECKPOINT
+```
+
+Every step follows the same disciplined path — the skill delivers the methodology, Codex provides the agent infrastructure.
+
+See `codex-skill/SKILL.md` for the full methodology body.
