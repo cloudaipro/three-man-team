@@ -1,6 +1,11 @@
 {
-  "latest": "v1.5.0",
+  "latest": "v1.6.0",
   "versions": [
+    {
+      "version": "v1.6.0",
+      "released": "2026-07-07",
+      "critical": false
+    },
     {
       "version": "v1.5.0",
       "released": "2026-07-05",
