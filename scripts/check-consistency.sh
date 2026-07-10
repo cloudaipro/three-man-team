@@ -53,6 +53,13 @@ echo "— Git tags & GitHub releases"
 # without tags on this fork, and fabricating history helps nobody.
 TAG_FLOOR="v1.6.0"
 
+# A tag counts if the local clone has it, or — for clones fetched without
+# tags (shallow CI checkouts, --no-tags clones) — if the remote has it.
+tag_exists() {
+  git tag -l "$1" | grep -q . && return 0
+  git ls-remote --exit-code --tags origin "refs/tags/$1" >/dev/null 2>&1
+}
+
 # The latest version is warned about, not failed: CI runs on the release
 # commit BEFORE it gets tagged, so a hard fail would deadlock every release.
 # A forgotten tag turns into a hard failure the moment the next version
@@ -64,7 +71,7 @@ for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); 
      [ "$(printf '%s\n%s\n' "$v" "$TAG_FLOOR" | sort -V | head -1)" = "$v" ]; then
     continue
   fi
-  if git tag -l "$v" | grep -q .; then
+  if tag_exists "$v"; then
     continue
   fi
   if [ "$v" = "$LATEST_V" ]; then

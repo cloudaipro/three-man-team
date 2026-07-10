@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # full history: checkout's fetch-tags is unreliable on shallow
+          # clones, and the tag audit needs the tags present
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Shell syntax
