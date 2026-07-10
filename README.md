@@ -203,6 +203,24 @@ See [releases](https://github.com/cloudaipro/three-man-team/releases) for what's
 
 ## Upgrading an Existing Project
 
+```
+Usage:
+  ./upgrade claude /path/to/your/project    upgrade a Claude Code install (default)
+  ./upgrade codex  /path/to/your/project    upgrade a Codex install (skill + project)
+  ./upgrade /path/to/your/project           same as: ./upgrade claude <project>
+```
+
+| Option | Applies to | What it does |
+|---|---|---|
+| `--dry-run` | both | Show what would change, change nothing |
+| `--replace-role-files` | claude only | Also replace ARCHITECT.md, BUILDER.md, REVIEWER.md — refused on renamed or customized installs. Codex installs don't need it: the full role templates live inside the skill, which the codex upgrade already refreshes |
+| `CODEX_HOME=<dir>` (env) | codex only | Where the skill lives, if your Codex directory is not `~/.codex` |
+
+Both paths back up everything they edit, never touch your live `handoff/` data, team
+names, or personas, and deliberately leave your version markers alone — your next
+session's version check walks the remaining role-file upgrades with you. Run
+`./upgrade --help` for the full reference.
+
 Update your clone, then run the upgrade tool against your project. The first argument
 picks the CLI your install runs under — `claude` (the default) or `codex`:
 
@@ -232,10 +250,6 @@ the skill, and the previous version is kept as a backup next to it), then adds a
 introduced project files (like `RULES.md`) without overwriting anything of yours. Your
 next Codex session's version check sees the refreshed registry and walks the changes with
 you. Set `CODEX_HOME` if your Codex directory is not `~/.codex`.
-
-Never renamed or customized your team? Add `--replace-role-files` to bring ARCHITECT.md,
-BUILDER.md, and REVIEWER.md fully current in one shot (the tool refuses this flag on
-customized installs). Preview any run with `--dry-run`.
 
 ---
 
