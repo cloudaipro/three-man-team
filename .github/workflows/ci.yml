@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          bash -n setup
+          bash -n upgrade
+          bash -n scripts/check-consistency.sh
+          bash -n codex-skill/scripts/setup-project.sh
+
+      - name: Shellcheck
+        run: |
+          shellcheck -S error setup upgrade scripts/check-consistency.sh codex-skill/scripts/setup-project.sh
+
+      - name: Release JSON well-formed
+        run: |
+          for f in releases/*.json; do
+            jq empty "$f" || { echo "invalid JSON: $f"; exit 1; }
+          done
+
+      - name: Repo self-audit
+        run: scripts/check-consistency.sh

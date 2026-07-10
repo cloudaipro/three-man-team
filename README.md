@@ -12,12 +12,16 @@
 
 ---
 
-## What's New — v1.5.0
+## What's New — v1.7.0
 
-- New: slash commands — start every session by typing `/architect` (optionally with your first request: `/architect fix the login bug`). First-time setup is `/tmt-setup`. No more pasting boot prompts; the classic prompts remain as fallback.
-- The commands are role-neutral — they read `manifest.md` to find your role files, so renamed teams need no edits.
+**Machines check what machines can check.** Every project gets a `RULES.md` quality contract:
 
-**v1.4.0** added `playbooks/` — the Architect's planning discipline as on-demand files: `PLANNING.md` (problem framing, step cutting, the seven-question Pre-Flight Check that gates every build), `DIAGNOSIS.md` (read-don't-recall debugging, the two-strikes rule), `BRIEF-EXAMPLES.md` (annotated weak-vs-strong briefs) — plus Out of Scope in every brief, a Lessons section in BUILD-LOG, and a Builder that refuses incomplete briefs.
+- **Mechanical Gate** — the project's own runnable checks (lint, tests, build). The Builder runs them before every review request; the Reviewer refuses to review over a missing or failing gate. Review attention goes only to what no command can verify.
+- **Standing Rules** — project rules the Reviewer checks every step, each with its source and an advisory/blocking status. New rules observe first, block only after proving themselves.
+- **Lessons graduate** — the second time the same Lesson lands in BUILD-LOG, it becomes a Standing Rule. The third repetition should be impossible.
+- **Model allocation with floors** — cheaper models where the gate proves it's safe; never on irreversible work. Cheapest at the same quality, never cheapest at any quality.
+
+**v1.6.0** added the Codex skill (`codex-skill/`). **v1.5.0** added slash commands — start every session with `/architect`. **v1.4.0** added `playbooks/` — the Architect's planning discipline as on-demand files.
 
 See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 
@@ -134,6 +138,20 @@ See a complete example from problem to deploy → [`examples/sprint-walkthrough.
 
 ---
 
+## The Quality Contract
+
+Human review is expensive — so nothing reaches it that a command could have caught. `RULES.md` holds the project's quality contract, drafted by Arch from the project's *own* docs and tooling, never invented:
+
+| Section | What it holds | Who acts on it |
+|---|---|---|
+| **Mechanical Gate** | The project's runnable checks — lint, tests, build | Builder runs it before every review request; Reviewer bounces anything without a passing gate |
+| **Standing Rules** | Project rules with sources — advisory first, blocking once proven | Reviewer checks them every step, by rule number |
+| **Iron Rules** | Framework process invariants | Everyone; a violation is a process bug and gets a Lesson |
+
+The loop closes through BUILD-LOG's Lessons: a mistake becomes a lesson, a repeated lesson becomes a Standing Rule, and a rule nobody's flags survive gets retired. The team gets stricter exactly where it has been burned.
+
+---
+
 ## The Team
 
 <p align="center">
@@ -185,20 +203,35 @@ See [releases](https://github.com/cloudaipro/three-man-team/releases) for what's
 
 ## Upgrading an Existing Project
 
-Update your clone, then run the upgrade tool against your project:
+Update your clone, then run the upgrade tool against your project. The first argument
+picks the CLI your install runs under — `claude` (the default) or `codex`:
 
 ```bash
 git -C ~/.claude/skills/three-man-team pull
-~/.claude/skills/three-man-team/upgrade /path/to/your/project
+~/.claude/skills/three-man-team/upgrade claude /path/to/your/project
 ```
 
-(Per-project installs: the clone lives at `.claude/skills/three-man-team` inside the project.)
+(Per-project installs: the clone lives at `.claude/skills/three-man-team` inside the
+project. `./upgrade /path/to/your/project` without the CLI argument means `claude`.)
 
-The tool installs everything additive — `playbooks/`, the `/architect` and `/tmt-setup`
-commands, the token-optimizer skill — points your version check at this repo, backs up
-every file it edits, and never touches your live `handoff/` data, team names, or personas.
-Then start your next session with `/architect`: Arch walks the remaining role-file upgrades
-with you interactively.
+The claude upgrade installs everything additive — `playbooks/`, the `RULES.md`
+quality-contract skeleton, the `/architect` and `/tmt-setup` commands, the token-optimizer
+skill — points your version check at this repo, backs up every file it edits, and never
+touches your live `handoff/` data, team names, or personas. Then start your next session
+with `/architect`: Arch walks the remaining role-file upgrades with you interactively.
+
+Using the Codex skill instead? Same tool, one word different:
+
+```bash
+~/.claude/skills/three-man-team/upgrade codex /path/to/your/project
+```
+
+The codex upgrade refreshes the installed skill at `~/.codex/skills/three-man-team`
+(framework files — playbooks, role templates, the bundled version registry — live inside
+the skill, and the previous version is kept as a backup next to it), then adds any newly
+introduced project files (like `RULES.md`) without overwriting anything of yours. Your
+next Codex session's version check sees the refreshed registry and walks the changes with
+you. Set `CODEX_HOME` if your Codex directory is not `~/.codex`.
 
 Never renamed or customized your team? Add `--replace-role-files` to bring ARCHITECT.md,
 BUILDER.md, and REVIEWER.md fully current in one shot (the tool refuses this flag on
@@ -266,6 +299,10 @@ The skill is pre-installed in this repo. To use it in your Codex environment:
 # Copy the skill into your Codex skills directory
 cp -R codex-skill ~/.codex/skills/three-man-team
 ```
+
+To upgrade an existing install later, pull the repo and run `./upgrade codex
+/path/to/your/project` — it refreshes the skill (backup kept) and adds any newly
+introduced project files without touching your customizations.
 
 Restart Codex to pick up the new skill. It will trigger automatically when your task involves structured software development, planning, multi-step builds, or review — or when you mention "three man team", "TMT", or any role name.
 

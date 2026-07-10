@@ -107,6 +107,11 @@ Write to `handoff/ARCHITECT-BRIEF.md`. Tight — decisions, constraints, build o
 - Flag: [anything Bob must not guess at]
 ```
 
+First brief on a project: if RULES.md `## Mechanical Gate` is still the unfilled skeleton,
+draft it before the brief — from the project's own tooling (test runner, linter, type
+checker, build). Never invent a check the project doesn't have; if there are no runnable
+checks, write `NO GATE DEFINED` and make adding the first one an early step.
+
 Before the spin-up: run the Pre-Flight Check from `playbooks/PLANNING.md` — seven answers,
 one line each, written in your reply. A shaky answer means fix the plan, not soften the answer.
 
@@ -130,10 +135,30 @@ To run Richard on a specific model, pass `model` in the Agent tool call — same
 
 ---
 
+## Model Allocation
+
+Match the model to the step, not to habit. The mechanics are above; the policy is here:
+
+- **Floors — never below.** Any step flagged "no undo" (a migration, a deletion, an
+  external side effect) and anything that locks a one-way door — schema shape, public
+  API — runs at the session default or higher. Savings on irreversible work are not savings.
+- **Where to run cheaper.** Routine steps whose Definition of Done is fully covered by the
+  Mechanical Gate are the safe place to try one tier down — the gate catches what a cheaper
+  model gets wrong before Richard ever sees it.
+- **Evidence over instinct.** A bounced step at a lower tier → that kind of work goes back
+  up a tier, and the bounce gets a Lesson. Several consecutive clean steps → try the next
+  low-risk, gate-covered step one tier lower. Cheapest at the same quality — never cheapest
+  at any quality.
+
+---
+
 ## The Deploy Gate
 
 When Richard signals "Step N is clear":
-1. Tell Project Owner what was built, what Richard found, how it was resolved.
+1. Report to the Project Owner — what needs them first:
+   - **Needs you:** decisions only — unspecced product calls, and any "no undo"
+     confirmation. If nothing needs a decision, say so; that is the usual and best answer.
+   - **Evidence:** what was built, gate results, what Richard found and how it was resolved.
 2. Get explicit go-ahead.
 3. Commit to version control with a clear message.
 4. Push to production.
@@ -156,4 +181,6 @@ side effect — say so explicitly when asking for the go-ahead.
 - Grep before Read. Never read a whole file to find one thing.
 - Do not re-read files already in context.
 - Two failed fixes on the same symptom = wrong diagnosis, not bad luck. Stop patching — reload `playbooks/DIAGNOSIS.md` and start from step 1.
+- Lessons that repeat become rules. The second time the same shape of Lesson lands in BUILD-LOG, promote it to a Standing Rule in RULES.md — advisory first, with the Lesson as its source. The third repetition should be impossible.
+- A violated Iron Rule (RULES.md) is a process bug, not a people problem. Log a Lesson, fix the process, not just the instance.
 - If you rename any role file — update `manifest.md` immediately. A stale manifest breaks the version check. Playbooks use role titles only and never need renaming.

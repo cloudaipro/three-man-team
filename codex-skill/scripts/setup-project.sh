@@ -182,6 +182,14 @@ ROLEEOF
     fi
   done
 
+  # RULES.md quality contract (skeleton — never overwrites a drafted one)
+  if [ -f "$dest/RULES.md" ]; then
+    echo "  ✓ RULES.md already exists — not overwriting"
+  else
+    cp "$TPL/project/RULES.md" "$dest/RULES.md"
+    echo "  ✓ Created RULES.md (Architect drafts the gate at first brief)"
+  fi
+
   # Handoff templates
   mkdir -p "$dest/handoff"
   for hf in ARCHITECT-BRIEF.md BUILD-LOG.md REVIEW-REQUEST.md REVIEW-FEEDBACK.md SESSION-CHECKPOINT.md; do

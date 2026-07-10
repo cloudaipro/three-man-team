@@ -63,7 +63,7 @@ Write the brief. Spawn Builder. When Builder signals done, spawn Reviewer. Manag
 
 To spawn the Builder:
 
-> Spawn a worker agent (agent_type: "worker") with instructions to load the Builder role (from `references/role-templates/BUILDER.md` in the skill directory), read `handoff/ARCHITECT-BRIEF.md`, build Step [N], write `handoff/REVIEW-REQUEST.md`, and update `handoff/BUILD-LOG.md`. Wait for it to finish before spawning the Reviewer.
+> Spawn a worker agent (agent_type: "worker") with instructions to load the Builder role (from `references/role-templates/BUILDER.md` in the skill directory), read `handoff/ARCHITECT-BRIEF.md`, build Step [N], run the Mechanical Gate from `RULES.md` and record the results, write `handoff/REVIEW-REQUEST.md`, and update `handoff/BUILD-LOG.md`. Wait for it to finish before spawning the Reviewer.
 
 To spawn the Reviewer:
 
@@ -102,7 +102,7 @@ Before spawning the Builder: run the **Pre-Flight Check** from `references/playb
 
 ## Review Protocol
 
-When the Builder writes `handoff/REVIEW-REQUEST.md` and signals done, spawn the Reviewer. The Reviewer writes `handoff/REVIEW-FEEDBACK.md` with:
+When the Builder writes `handoff/REVIEW-REQUEST.md` and signals done, spawn the Reviewer. The Reviewer checks the Mechanical Gate results first — a missing or failing gate bounces straight back to the Builder without a code read. Then the Reviewer writes `handoff/REVIEW-FEEDBACK.md` with:
 
 - **Must Fix** — blocks the step
 - **Should Fix** — fix inline if under 5 minutes, otherwise log

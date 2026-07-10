@@ -1,50 +1,92 @@
 #!/bin/bash
 # Three Man Team — upgrade tool
 # Upgrades an existing Three Man Team project install to the version in this clone.
-#
-# Usage:
-#   ./upgrade /path/to/your/project                        safe upgrade (recommended)
-#   ./upgrade --replace-role-files /path/to/your/project   also replace the three role
-#                                                          files (stock, never-renamed
-#                                                          installs only)
-#   ./upgrade --dry-run /path/to/your/project              show what would change
-#
-# What the safe upgrade does:
-#   - installs playbooks/ and .claude/commands/ (framework-owned, role-neutral)
-#   - refreshes .claude/skills/token-optimization.md
-#   - points the version check in your role file at this repo
-#   - adds the Lessons section to your live BUILD-LOG
-#   - backs up every file it edits to .tmt-upgrade-backup-<timestamp>/
-#   - NEVER touches your live handoff data, personas, or team names
-#
-# It deliberately leaves your version markers alone: your next session's version
-# check walks the remaining role-file upgrades with you, preserving customizations.
+# Supports both CLIs the framework ships for: Claude Code and Codex.
 
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TPL="$SCRIPT_DIR/templates/project-folder"
+SKILL_SRC="$SCRIPT_DIR/codex-skill"
+
+usage() {
+  cat <<'USAGE'
+Three Man Team — upgrade tool
+
+Usage:
+  ./upgrade claude /path/to/your/project    upgrade a Claude Code install (default)
+  ./upgrade codex  /path/to/your/project    upgrade a Codex install (skill + project)
+  ./upgrade /path/to/your/project           same as: ./upgrade claude <project>
+
+Options:
+  --dry-run             show what would change, change nothing
+  --replace-role-files  (claude only) also replace the three role files —
+                        stock, never-renamed installs only.
+                        Why claude only: a Claude Code install carries the FULL
+                        role templates in the project, and a stock install is
+                        detectable (the script fingerprints it), so wholesale
+                        replacement is safe there. A Codex install keeps the
+                        full templates inside the skill — which the codex
+                        upgrade already refreshes — and the project holds only
+                        stubs or your own customizations, neither of which can
+                        be safely overwritten
+
+What the claude upgrade does:
+  - installs playbooks/ and .claude/commands/ (framework-owned, role-neutral)
+  - installs the RULES.md quality-contract skeleton if missing (never overwrites)
+  - refreshes .claude/skills/token-optimization.md
+  - points the version check in your role file at this repo
+  - adds the Lessons section to your live BUILD-LOG
+
+What the codex upgrade does:
+  - refreshes the installed skill at $CODEX_HOME/skills/three-man-team
+    (default: ~/.codex/skills/three-man-team) — framework files live there,
+    and the previous version is kept as a backup next to it
+  - re-runs the skill's setup-project.sh on your project, which only ADDS
+    files introduced since your install (e.g. RULES.md) — existing files,
+    role stubs, and handoff data are never overwritten
+
+Both paths:
+  - back up everything they edit
+  - NEVER touch your live handoff data, personas, or team names
+  - deliberately leave your version markers alone: your next session's
+    version check sees the new version and walks the remaining role-file
+    upgrades with you, preserving customizations
+USAGE
+}
 
 # --- args -------------------------------------------------------------------
+CLI=""
 PROJECT=""
 REPLACE=0
 DRY=0
 
 for arg in "$@"; do
   case "$arg" in
+    claude|codex)
+      if [ -z "$CLI" ] && [ -z "$PROJECT" ]; then CLI="$arg"; else PROJECT="$arg"; fi ;;
     --replace-role-files) REPLACE=1 ;;
     --dry-run)            DRY=1 ;;
-    -h|--help)            sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)            usage; exit 0 ;;
     -*)                   echo "Unknown option: $arg (see --help)"; exit 1 ;;
     *)                    PROJECT="$arg" ;;
   esac
 done
 
+[ -n "$CLI" ] || CLI="claude"   # backwards compatible: ./upgrade /path == claude
+
 if [ -z "$PROJECT" ]; then
-  echo "Usage: ./upgrade [--replace-role-files] [--dry-run] /path/to/your/project"
+  echo "Usage: ./upgrade [claude|codex] [--replace-role-files] [--dry-run] /path/to/your/project"
   exit 1
 fi
 PROJECT="$(cd "$PROJECT" 2>/dev/null && pwd)" || { echo "✗ Project folder not found."; exit 1; }
+
+if [ "$CLI" = "codex" ] && [ "$REPLACE" = 1 ]; then
+  echo "✗ --replace-role-files applies to claude installs only."
+  echo "  Codex role files are stubs you customized — the refreshed skill carries"
+  echo "  the full templates at references/role-templates/ for you to re-apply."
+  exit 1
+fi
 
 # --- helpers ----------------------------------------------------------------
 if sed --version >/dev/null 2>&1; then SED_GNU=1; else SED_GNU=0; fi
@@ -54,10 +96,10 @@ sed_i() { # sed_i 'expr' file
 say()  { echo "  $*"; }
 plan() { if [ "$DRY" = 1 ]; then echo "  [dry-run] $*"; else echo "  ✓ $*"; fi; }
 
-# --- sanity -----------------------------------------------------------------
+# --- sanity (common) ---------------------------------------------------------
 echo ""
 echo "========================================="
-echo "  Three Man Team — Upgrade"
+echo "  Three Man Team — Upgrade ($CLI)"
 echo "========================================="
 echo ""
 
@@ -67,13 +109,102 @@ echo ""
 LATEST="$(sed -n 's/.*"latest": *"\([^"]*\)".*/\1/p' "$SCRIPT_DIR/releases/latest.json" | head -1)"
 [ -n "$LATEST" ] || { echo "✗ Could not read version from this clone's releases/latest.json"; exit 1; }
 
-# Soft staleness check against the remote registry (skip silently offline)
+# Soft staleness check against the remote registry (skip silently offline).
+# Fail only when the remote is NEWER than the clone — a clone ahead of the
+# registry is a developer working on an unreleased version, not a stale install.
 REMOTE="$(curl -s --max-time 5 https://raw.githubusercontent.com/cloudaipro/three-man-team/main/releases/latest.json 2>/dev/null | sed -n 's/.*"latest": *"\([^"]*\)".*/\1/p' | head -1)"
 if [ -n "$REMOTE" ] && [ "$REMOTE" != "$LATEST" ]; then
-  echo "⚠ This clone ships $LATEST but the registry says $REMOTE."
-  echo "  Run: git -C $SCRIPT_DIR pull — then re-run this upgrade."
-  exit 1
+  NEWEST="$(printf '%s\n%s\n' "$LATEST" "$REMOTE" | sort -V | tail -1)"
+  if [ "$NEWEST" = "$REMOTE" ]; then
+    echo "⚠ This clone ships $LATEST but the registry says $REMOTE."
+    echo "  Run: git -C $SCRIPT_DIR pull — then re-run this upgrade."
+    exit 1
+  fi
+  echo "⚠ This clone ships $LATEST, ahead of the published registry ($REMOTE). Continuing."
 fi
+
+# =============================== CODEX PATH ==================================
+if [ "$CLI" = "codex" ]; then
+  [ -f "$SKILL_SRC/SKILL.md" ] || {
+    echo "✗ This clone has no codex-skill/ directory. Run: git -C $SCRIPT_DIR pull"; exit 1; }
+
+  SKILL_DEST="${CODEX_HOME:-$HOME/.codex}/skills/three-man-team"
+
+  if [ ! -f "$PROJECT/AGENTS.md" ] && [ ! -d "$PROJECT/handoff" ]; then
+    echo "✗ No Three Man Team (Codex) install found at: $PROJECT"
+    echo "  (looked for AGENTS.md and handoff/ — for a fresh install, run"
+    echo "   codex-skill/scripts/setup-project.sh — see README, Codex Integration)"
+    exit 1
+  fi
+
+  echo "Project:    $PROJECT"
+  echo "Skill dir:  $SKILL_DEST"
+  echo "Upgrading:  to $LATEST"
+  [ "$DRY" = 1 ] && echo "Mode:       dry run — nothing will be changed"
+  echo ""
+
+  echo "— Refreshing the Codex skill (framework-owned files live here)"
+  # Safety: this path gets replaced wholesale — only ever act on the exact
+  # directory shape we own, never on whatever an env var happens to point at.
+  case "$SKILL_DEST" in
+    */skills/three-man-team) ;;
+    *) echo "✗ Refusing to touch unexpected skill path: $SKILL_DEST"; exit 1 ;;
+  esac
+
+  if [ -d "$SKILL_DEST" ]; then
+    SKILL_BACKUP="$SKILL_DEST.backup-$(date +%Y%m%d-%H%M%S)"
+    if [ "$DRY" = 0 ]; then
+      cp -R "$SKILL_DEST" "$SKILL_BACKUP"
+      rm -rf "$SKILL_DEST"
+      cp -R "$SKILL_SRC" "$SKILL_DEST"
+    fi
+    plan "skill refreshed to $LATEST (previous version: $SKILL_BACKUP)"
+  else
+    if [ "$DRY" = 0 ]; then
+      mkdir -p "$(dirname "$SKILL_DEST")"
+      cp -R "$SKILL_SRC" "$SKILL_DEST"
+    fi
+    plan "skill was not installed — installed fresh at $SKILL_DEST"
+  fi
+
+  echo ""
+  echo "— Project files (additive only — nothing existing is overwritten)"
+  if [ "$DRY" = 0 ]; then
+    if OUT="$("$SKILL_SRC/scripts/setup-project.sh" "$PROJECT" 2>&1)"; then
+      echo "$OUT" | grep '✓' || say "nothing to add — project already has every framework file"
+    else
+      echo "$OUT"
+      echo "✗ setup-project.sh failed — project files were not updated."
+      exit 1
+    fi
+  else
+    plan "run the skill's setup-project.sh — adds only files your project is missing (e.g. RULES.md)"
+  fi
+
+  echo ""
+  echo "— Version markers: left untouched"
+  say "Your manifest.md version was deliberately NOT updated. In your next Codex"
+  say "session, the skill's check-version.py compares it against the refreshed"
+  say "bundled registry ($LATEST) and the Architect walks the changes with you."
+
+  echo ""
+  echo "========================================="
+  if [ "$DRY" = 1 ]; then
+    echo "  Dry run complete — nothing was changed."
+    echo "  Re-run without --dry-run to apply."
+  else
+    echo "  Codex upgrade to $LATEST complete."
+    echo ""
+    echo "  Next: start a Codex session in your project and type:"
+    echo ""
+    echo "  @three-man-team"
+  fi
+  echo "========================================="
+  echo ""
+  exit 0
+fi
+
+# =============================== CLAUDE PATH =================================
 
 # Find the architect role file: manifest.md wins, ARCHITECT.md is the fallback
 ARCH_FILE=""
@@ -145,10 +276,18 @@ if [ "$DRY" = 0 ]; then
 fi
 plan ".claude/skills/token-optimization.md refreshed"
 
+# 4. RULES.md quality contract (skeleton — never overwrites a drafted one)
+if [ ! -f "$PROJECT/RULES.md" ]; then
+  [ "$DRY" = 0 ] && cp "$TPL/RULES.md" "$PROJECT/RULES.md"
+  plan "RULES.md — quality contract skeleton (Architect drafts the gate next session)"
+else
+  say "RULES.md — already present, left untouched."
+fi
+
 echo ""
 echo "— Pointing the version check at this repo"
 
-# 4. URL switch in role file (+ stale new-setup.md if still present)
+# 5. URL switch in role file (+ stale new-setup.md if still present)
 for f in "$ARCH_FILE" new-setup.md; do
   if [ -f "$PROJECT/$f" ] && grep -q "russelleNVy/three-man-team" "$PROJECT/$f"; then
     backup "$f"
@@ -160,7 +299,7 @@ done
 echo ""
 echo "— Live handoff files (additive edits only)"
 
-# 5. BUILD-LOG Lessons section
+# 6. BUILD-LOG Lessons section
 BL="$PROJECT/handoff/BUILD-LOG.md"
 if [ -f "$BL" ] && ! grep -q "^## Lessons" "$BL"; then
   backup "handoff/BUILD-LOG.md"

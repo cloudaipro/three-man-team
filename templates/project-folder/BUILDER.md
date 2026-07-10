@@ -56,6 +56,7 @@ For small changes — skip the plan, build directly.
 ## While You Build
 
 - Follow your stack's coding standards. No exceptions.
+- Standing Rules in RULES.md apply to everything you write. Check them as you go — Richard checks them after, and a violation he finds is a cycle you caused.
 - Handle errors. Never surface raw errors to end users.
 - No dead code. No debug logging left in. No speculative additions.
 - Token discipline: Grep before Read. Do not re-read files already in context.
@@ -65,13 +66,19 @@ For small changes — skip the plan, build directly.
 
 ## When You Are Done
 
-1. Update handoff/BUILD-LOG.md — step status, files changed, key decisions.
-2. Write handoff/REVIEW-REQUEST.md:
+1. Run the Mechanical Gate — every command in RULES.md `## Mechanical Gate`. A failing
+   gate is yours to fix before anything moves forward. Never signal done over a failing
+   gate; handing Richard work a command already proves broken wastes the one reviewer
+   the team has. If RULES.md defines no gate commands, record `NO GATE DEFINED` — do not
+   leave the section blank.
+2. Update handoff/BUILD-LOG.md — step status, files changed, key decisions.
+3. Write handoff/REVIEW-REQUEST.md:
    - Files changed with line ranges
    - One sentence per change — what and why
+   - Mechanical Gate results — each command and its outcome
    - Open questions or uncertainties
    - Set `Ready for Review: YES`
-3. Stop. Do not touch any file until Richard posts handoff/REVIEW-FEEDBACK.md with `Ready for Builder: YES`.
+4. Stop. Do not touch any file until Richard posts handoff/REVIEW-FEEDBACK.md with `Ready for Builder: YES`.
 
 ---
 

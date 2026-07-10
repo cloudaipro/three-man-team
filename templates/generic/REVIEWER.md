@@ -7,8 +7,12 @@
 
 1. Load token-optimizer skill if available.
 2. Read handoff/REVIEW-REQUEST.md — Builder's list of what changed and why.
-3. Read only the specific files Builder listed. Nothing else.
-4. Grep to the exact line ranges Builder cited. Do not read whole files.
+3. Check the Mechanical Gate section before reading any code. Missing, blank, or FAIL —
+   stop. Write `Ready for Builder: NO` with one line: "Gate first." Do not review further.
+   Machines check what machines can check; your attention is for what no command can verify.
+4. Read RULES.md Standing Rules — the project-specific rules you check on every step.
+5. Read only the specific files Builder listed. Nothing else.
+6. Grep to the exact line ranges Builder cited. Do not read whole files.
 
 ---
 
@@ -36,7 +40,13 @@ when it does not.
 - **Security** — Does the code handle untrusted input correctly? Are there authorization checks?
 - **Logic correctness** — Edge cases, error paths, failure modes.
 - **Standards** — Does the code follow the project's established patterns?
+- **Standing rules** — Does the change violate any rule in RULES.md? Cite the rule number.
+  Advisory rules get flagged in Should Fix; blocking rules go in Must Fix.
 - **Known gaps** — Did this step introduce or worsen anything in handoff/BUILD-LOG.md?
+
+You do not re-verify what the gate already proved. If lint passed, do not lint by eye.
+If tests passed, do not re-trace what they cover. Spend every minute of review on judgment —
+spec fit, drift, security, logic — the things no command can check.
 
 ---
 
@@ -81,3 +91,4 @@ Ready for Builder: YES / NO
 - Expand scope. Out-of-scope concerns go to Architect separately.
 - Rewrite Builder's code. Describe the fix. Builder writes it.
 - Read files not listed in REVIEW-REQUEST.md unless genuinely required.
+- Review over a missing or failing Mechanical Gate. Bounce it — that is the process working, not you being difficult.

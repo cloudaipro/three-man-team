@@ -1,0 +1,52 @@
+{
+  "version": "v1.7.0",
+  "released": "2026-07-10",
+  "from_version": "v1.6.0",
+  "arch_opening": "There is an update available — version 1.7.0. The theme is 'machines check what machines can check': a new RULES.md gives the project a quality contract — a mechanical gate the Builder runs before every review, standing rules with sources, and a path for repeated Lessons to graduate into rules. I'll look at your files and walk you through exactly what applies.",
+  "changes": [
+    {
+      "id": "rules-md-quality-contract",
+      "type": "feature",
+      "title": "RULES.md — the project's quality contract",
+      "what_changed": "A new root-level RULES.md holds three sections: a Mechanical Gate (the project's own runnable checks — lint, tests, build — that must pass before any review request), Standing Rules (project-specific rules the Reviewer checks every step, each with a source and an advisory/blocking status), and Iron Rules (framework process invariants). REVIEW-REQUEST.md gains a Mechanical Gate results section.",
+      "old_behavior": "All verification was the Reviewer's judgment. Lint failures, broken tests, and rule violations reached the Reviewer's (and your) attention alongside real design questions.",
+      "new_behavior": "The Builder runs the gate commands before signaling done and records results; the Reviewer refuses to review over a missing or failing gate and checks Standing Rules by number. Review attention is spent only on what no command can verify.",
+      "user_impact_plain": "Fewer review cycles burned on things a linter catches for free, and project rules live in one auditable file instead of scattered memory.",
+      "how_to_assess": "Check whether RULES.md exists in the project root. If not: copy templates/project-folder/RULES.md from the framework clone (or run the clone's ./upgrade tool, which installs it additively), then draft the Mechanical Gate from the project's own tooling — package.json scripts, Makefile, pyproject.toml, CI config. Only commands that exist and run today; if there are none, write NO GATE DEFINED. Also add the Mechanical Gate section to handoff/REVIEW-REQUEST.md if the live file lacks it (see the template).",
+      "user_decision": "Want me to set up RULES.md and draft the mechanical gate from this project's own tooling? You'll approve the draft — I only list checks that already exist."
+    },
+    {
+      "id": "gate-first-review",
+      "type": "improvement",
+      "title": "Builder runs the gate; Reviewer bounces gate-less requests",
+      "what_changed": "BUILDER.md 'When You Are Done' now starts with running the Mechanical Gate and recording results in REVIEW-REQUEST.md. REVIEWER.md Session Start now checks the gate section before reading any code — missing, blank, or failing means 'Ready for Builder: NO — Gate first', with no code read. The Reviewer also stops re-verifying what the gate already proved.",
+      "old_behavior": "The Builder self-reviewed informally; the Reviewer read code regardless of whether mechanical checks had run.",
+      "new_behavior": "Deterministic checks run first, every step, and the review request carries the evidence.",
+      "user_impact_plain": "The one reviewer the team has never spends a cycle on work a command already proves broken.",
+      "how_to_assess": "Read the user's Builder and Reviewer role files (names from manifest.md). If their 'When You Are Done' / 'Session Start' sections lack the gate steps, offer to apply the same edits the v1.7.0 templates carry — preserving their team names and personas. Only applies after RULES.md exists (previous change).",
+      "user_decision": "Want me to add the gate steps to your Builder and Reviewer role files? Your team names and personas stay untouched."
+    },
+    {
+      "id": "lessons-graduate-to-rules",
+      "type": "improvement",
+      "title": "Repeated Lessons graduate into Standing Rules",
+      "what_changed": "PLANNING.md §8 and the Architect's Anti-Drift rules now say: the second time the same shape of Lesson lands in BUILD-LOG, promote it to a Standing Rule in RULES.md — advisory first, with the Lesson as its source. The reverse holds too: a rule whose flags keep getting waved through gets reworded or retired.",
+      "old_behavior": "Lessons accumulated in BUILD-LOG and relied on the Architect re-reading them before each brief.",
+      "new_behavior": "Recurring lessons become checks the whole team runs every step; the third repetition should be impossible.",
+      "user_impact_plain": "The team stops re-learning the same mistake — it becomes a standing check instead of a memory.",
+      "how_to_assess": "The playbooks are role-neutral: refresh playbooks/PLANNING.md from the clone (or via ./upgrade). Then read the user's BUILD-LOG Lessons — if any lesson already repeats, offer to draft it as the first Standing Rule right now.",
+      "user_decision": "Want me to refresh the planning playbook and check your existing Lessons for any that should already be rules?"
+    },
+    {
+      "id": "model-allocation-floors",
+      "type": "improvement",
+      "title": "Model allocation policy with floors",
+      "what_changed": "ARCHITECT.md gains a Model Allocation section: irreversible work (no-undo steps, schema/public-API changes) never runs below the session default; routine gate-covered steps are the safe place to try a cheaper tier; a bounce at a lower tier sends that kind of work back up and gets a Lesson. The deploy-gate report now leads with 'what needs you' — decisions first, evidence second.",
+      "old_behavior": "Model choice guidance covered only the mechanics (aliases, the model parameter), not when a cheaper tier is safe.",
+      "new_behavior": "Tier choice follows a written policy: cheapest at the same quality, never cheapest at any quality — with floors protecting irreversible work.",
+      "user_impact_plain": "Spend drops where the gate proves it's safe, and never on the steps that can't be undone.",
+      "how_to_assess": "Read the user's Architect role file (name from manifest.md). If it lacks a Model Allocation section, offer to add it — same content as the v1.7.0 template, adapted to their team names.",
+      "user_decision": "Want the model-allocation policy added to your Architect file? It changes nothing by default — it just writes down when a cheaper model is safe to try."
+    }
+  ]
+}

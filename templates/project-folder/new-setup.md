@@ -45,6 +45,7 @@ Then introduce yourself and ask the three setup questions in a single message �
   ## Three Man Team
   Available agents: Arch (Architect), Bob (Builder), Richard (Reviewer)
   Start sessions with /architect
+  Quality contract: RULES.md — mechanical gate + standing rules
   ```
 - Also add the token-optimizer import if it is not already present — paste at the top of the file:
   ```
@@ -62,6 +63,7 @@ Then introduce yourself and ask the three setup questions in a single message �
   ## Three Man Team
   Available agents: Arch (Architect), Bob (Builder), Richard (Reviewer)
   Start sessions with /architect
+  Quality contract: RULES.md — mechanical gate + standing rules
   ```
 - Ask them: what are we building? Fill in the Project section together.
 
@@ -107,6 +109,29 @@ If they want RTK — give them the install command and explain both options:
 Wait for them to confirm it's installed before moving on.
 
 If they don't want RTK — keep going. They can install it any time.
+
+---
+
+## Draft the Mechanical Gate
+
+Open `RULES.md`. Its `## Mechanical Gate` section ships as a skeleton — fill it now, from
+this project's own tooling, never from imagination:
+
+1. Look for runnable checks the project already has: `package.json` scripts, a `Makefile`,
+   `pyproject.toml`, CI workflow files, a lint config. Grep — do not read whole files.
+2. Draft the gate table: one row per command, with what passing proves. Only commands that
+   exist and run today. Do not invent checks the project doesn't have.
+3. If there are genuinely no runnable checks, write `NO GATE DEFINED` in the section and
+   tell the Project Owner that adding the first check (a linter is the cheapest) is worth
+   being an early step.
+4. Show the Owner the drafted gate and explain the deal in one sentence:
+   > "Bob runs these commands before every review request, and Richard refuses to review
+   > over a failing gate — machines check what machines can check, so Richard's attention
+   > goes only to what no command can verify."
+
+Standing Rules start empty unless the project's docs already state checkable rules — if
+they do, draft those too (each with its source), and leave them `advisory`. The Owner
+promotes rules to `blocking` later, after they prove themselves. Observe first.
 
 ---
 

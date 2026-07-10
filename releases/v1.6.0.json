@@ -1,0 +1,19 @@
+{
+  "version": "v1.6.0",
+  "released": "2026-07-07",
+  "from_version": "v1.5.0",
+  "arch_opening": "There is an update available — version 1.6.0. It's entirely on the Codex side: Three Man Team now ships as a Codex skill, so the methodology runs in Codex sessions too. If you only use Claude Code, nothing in your project changes — I'll just mark you up to date.",
+  "changes": [
+    {
+      "id": "codex-skill-integration",
+      "type": "feature",
+      "title": "Codex skill package (codex-skill/)",
+      "what_changed": "The full methodology is adapted as a Codex skill: SKILL.md with description-triggered invocation, playbooks and role templates as references, a project scaffolding script (setup-project.sh), a local version checker, and an optional @three-man-team Codex plugin.",
+      "old_behavior": "Three Man Team ran only under Claude Code.",
+      "new_behavior": "The same workflow runs in Codex: you are the Architect, and Builder/Reviewer spawn via Codex's spawn_agent.",
+      "user_impact_plain": "Claude Code projects need no changes. If you also use Codex, you can install the skill from the framework clone's codex-skill/ directory.",
+      "how_to_assess": "Ask whether the user works in Codex as well as Claude Code. If no: nothing to do — write version_notified and move on. If yes: point them at the clone's codex-skill/ directory and the README's Codex Integration section (cp -R codex-skill ~/.codex/skills/three-man-team, then scripts/setup-project.sh).",
+      "user_decision": "Do you also use Codex? If so, want me to walk through installing the Codex skill? If not, there's nothing to apply — you're current."
+    }
+  ]
+}

@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.7.0 — 2026-07-10
+
+The theme: *machines check what machines can check* — verification, allocation, and learning patterns adapted from [agent-steward](https://github.com/michaelchen73092/agent-steward)'s quality-gate/spend-audit loop, rebuilt as markdown process (no runtime dependency added).
+
+- Feature: `RULES.md` — the project's quality contract, shipped in both template sets and the Codex skill. Three sections: **Mechanical Gate** (the project's own runnable checks — lint, tests, build — that must pass before any review request; drafted by the Architect from the project's own tooling, never invented), **Standing Rules** (project-specific rules the Reviewer checks every step — each carries its source and an advisory/blocking status; advisory first, promoted only after proving itself), and **Iron Rules** (framework process invariants — violating one is a process bug that gets a Lesson)
+- Feature: gate-first review — BUILDER.md "When You Are Done" now starts with running the Mechanical Gate and recording results in a new REVIEW-REQUEST.md `## Mechanical Gate` section; REVIEWER.md checks that section before reading any code and bounces missing/failing gates with "Gate first" — and no longer re-verifies what the gate already proved. Review attention is spent only on judgment: spec fit, drift, security, logic
+- Feature: Lessons graduate into rules — PLANNING.md §8 and the Architect Anti-Drift rules: the second time the same shape of Lesson lands in BUILD-LOG, it gets promoted to a Standing Rule in RULES.md (advisory, with the Lesson as its source); a rule whose flags keep getting waved through gets reworded or retired
+- Feature: model allocation policy — ARCHITECT.md gains a Model Allocation section: floors (no-undo steps and one-way doors never run below the session default), gate-covered routine steps as the safe place to try one tier down, and evidence-based movement (a bounce sends that work back up a tier and gets a Lesson). Cheapest at the same quality, never cheapest at any quality
+- Improve: the deploy-gate report leads with "what needs you" — decisions first (unspecced product calls, no-undo confirmations; "nothing needs you" is the usual answer), evidence second
+- Improve: new-setup.md gains a "Draft the Mechanical Gate" step — the Architect drafts the gate from the project's own tooling at first-time setup and explains the deal to the Project Owner in one sentence
+- Improve: `./upgrade` installs the RULES.md skeleton additively (never overwrites a drafted one); codex-skill `setup-project.sh` scaffolds RULES.md the same way; codex-skill role templates and SKILL.md carry the gate protocol
+- Tooling: `./upgrade` now serves both CLIs — `./upgrade claude <project>` (the default; bare `./upgrade <project>` still works) runs the existing Claude Code flow, and `./upgrade codex <project>` refreshes the installed Codex skill at `$CODEX_HOME/skills/three-man-team` (previous version kept as a backup next to it, path shape guarded before replacement) and re-runs the skill's `setup-project.sh`, which only adds files the project is missing. Both paths leave version markers alone so the next session's version check walks role-file changes interactively; `--replace-role-files` is refused under codex
+- Fix: codex-skill's bundled `releases/latest.json` (used by its offline version checker) had drifted behind the repo registry — synced, and the self-audit now fails if the two ever differ
+- Tooling: `scripts/check-consistency.sh` — the repo now audits its own release machinery: manifest/registry version agreement, a JSON file per registry version, a changelog entry for the latest release, changelog ordering, template-set parity, and upgrade-tool source files. Run by CI (`.github/workflows/ci.yml`) alongside shell syntax checks
+- Fix: release-registry drift — repo manifest said v1.6.0 while `releases/latest.json` still said v1.5.0, `releases/v1.6.0.json` did not exist (installed projects were never told about v1.6.0), and the v1.6.0 changelog entry was misfiled below v1.0.0. All three corrected; the new consistency check makes this class of drift a CI failure
+
+## v1.6.0 — 2026-07-07
+
+- Feature: Codex skill integration (`codex-skill/`) — full Three Man Team methodology adapted as a Codex skill package. Includes SKILL.md with description-triggered invocation, playbooks as reference files, role templates adapted for Codex's `spawn_agent` (Builder → worker, Reviewer → default), token-optimization reference, project scaffolding script, and local version checker
+- Feature: `scripts/setup-project.sh` — scaffolds AGENTS.md (Codex session router), role file stubs, and the full handoff template set into any project directory; sets up .gitignore for handoff files
+- Feature: `scripts/check-version.py` — lightweight local version checker comparing manifest.md against bundled releases registry (sandbox-safe, no network calls)
+- Improve: README.md — added Codex Integration section with component table, adaptation guide, install instructions, and workflow overview
+- New asset: `codex-skill/agents/openai.yaml` — UI metadata for skill discovery in Codex
+- New asset: `codex-skill/templates/project/AGENTS.md` — Codex-compatible session router with token rules and team table
+- Feature: `setup-project.sh` now supports `--plugin` flag to register `@three-man-team` Codex plugin, and `--plugin-only` flag for plugin-only installs — enables `@three-man-team` mention trigger in any Codex CLI session
+- New asset: `templates/plugin/.codex-plugin/plugin.json` and `templates/plugin/.app.json` — plugin manifest and App definition for `@three-man-team` mention support
+- Improve: README.md — updated setup docs for `--plugin`/`--plugin-only` flags, added "How to trigger in Codex CLI" section documenting `@three-man-team` mention and description matching
+
 ## v1.5.0 — 2026-07-05
 
 - Feature: slash commands ship in `.claude/commands/` (both template sets) — `/architect` starts or resumes the Architect session and optionally takes your first request as an argument (`/architect fix the login bug`); `/tmt-setup` runs first-time setup. Commands are role-neutral: `/architect` reads manifest.md to find renamed role files, so renamed teams need no edits
@@ -99,15 +127,3 @@ Initial public release.
 - RTK integration guidance in docs/token-optimization.md
 - Setup script with CLAUDE.md instructions printed on install
 - Full documentation suite
-
-## v1.6.0 — 2026-07-07
-
-- Feature: Codex skill integration (`codex-skill/`) — full Three Man Team methodology adapted as a Codex skill package. Includes SKILL.md with description-triggered invocation, playbooks as reference files, role templates adapted for Codex's `spawn_agent` (Builder → worker, Reviewer → default), token-optimization reference, project scaffolding script, and local version checker
-- Feature: `scripts/setup-project.sh` — scaffolds AGENTS.md (Codex session router), role file stubs, and the full handoff template set into any project directory; sets up .gitignore for handoff files
-- Feature: `scripts/check-version.py` — lightweight local version checker comparing manifest.md against bundled releases registry (sandbox-safe, no network calls)
-- Improve: README.md — added Codex Integration section with component table, adaptation guide, install instructions, and workflow overview
-- New asset: `codex-skill/agents/openai.yaml` — UI metadata for skill discovery in Codex
-- New asset: `codex-skill/templates/project/AGENTS.md` — Codex-compatible session router with token rules and team table
-- Feature: `setup-project.sh` now supports `--plugin` flag to register `@three-man-team` Codex plugin, and `--plugin-only` flag for plugin-only installs — enables `@three-man-team` mention trigger in any Codex CLI session
-- New asset: `templates/plugin/.codex-plugin/plugin.json` and `templates/plugin/.app.json` — plugin manifest and App definition for `@three-man-team` mention support
-- Improve: README.md — updated setup docs for `--plugin`/`--plugin-only` flags, added "How to trigger in Codex CLI" section documenting `@three-man-team` mention and description matching

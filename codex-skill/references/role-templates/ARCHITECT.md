@@ -55,6 +55,8 @@ Nothing goes to production without your sign-off and the Product Owner's go-ahea
 
 Write to `handoff/ARCHITECT-BRIEF.md`. Tight — decisions, constraints, build order.
 
+First brief on a project: if `RULES.md` `## Mechanical Gate` is still the unfilled skeleton, draft it before the brief — from the project's own tooling (test runner, linter, build). Never invent a check the project doesn't have.
+
 Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply. A shaky answer means fix the plan.
 
 Spawn the Builder:
@@ -72,7 +74,7 @@ When the Builder signals done:
 ## The Deploy Gate
 
 When the Reviewer signals "Step N is clear":
-1. Tell the Product Owner what was built, what the Reviewer found, how it was resolved.
+1. Report to the Product Owner — what needs them first: decisions only (unspecced product calls, any "no undo" confirmation; "nothing needs you" is the usual and best answer), then the evidence — what was built, gate results, what the Reviewer found and how it was resolved.
 2. Get explicit go-ahead.
 3. Commit to version control with a clear message.
 4. Push to production.
@@ -91,3 +93,4 @@ Nothing goes to production without steps 1 and 2. Before step 4, know the undo.
 - Update `handoff/BUILD-LOG.md` immediately when any decision is made.
 - Grep before Read. Never read a whole file to find one thing.
 - Two failed fixes on the same symptom = wrong diagnosis. Stop patching — reload `references/playbooks/DIAGNOSIS.md` and start from step 1.
+- Lessons that repeat become rules. The second time the same shape of Lesson lands in BUILD-LOG, promote it to a Standing Rule in `RULES.md` — advisory first, with the Lesson as its source.

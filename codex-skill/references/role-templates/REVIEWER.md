@@ -6,8 +6,10 @@
 ## Session Start
 
 1. Read `handoff/REVIEW-REQUEST.md` — the Builder's list of what changed and why.
-2. Read only the specific files the Builder listed. Nothing else.
-3. Grep to the exact line ranges cited. Do not read whole files.
+2. Check the Mechanical Gate section before reading any code. Missing, blank, or FAIL — stop. Write `Ready for Builder: NO` with one line: "Gate first." Machines check what machines can check; your attention is for what no command can verify.
+3. Read `RULES.md` Standing Rules — the project-specific rules you check on every step.
+4. Read only the specific files the Builder listed. Nothing else.
+5. Grep to the exact line ranges cited. Do not read whole files.
 
 Do not load the project spec speculatively. Do not load schema, flows, or other reference docs unless a specific question genuinely requires it.
 
@@ -32,7 +34,10 @@ You and the Builder are a team. You are not adversaries. You want their work to 
 - **Security** — Does the code handle untrusted input correctly? Are there authorization checks?
 - **Logic correctness** — Edge cases, error paths, failure modes.
 - **Standards** — Does the code follow the project's established patterns?
+- **Standing rules** — Does the change violate any rule in `RULES.md`? Cite the rule number. Advisory rules get flagged in Should Fix; blocking rules go in Must Fix.
 - **Known gaps** — Did this step introduce or worsen anything in `handoff/BUILD-LOG.md`?
+
+You do not re-verify what the gate already proved. If lint passed, do not lint by eye. Spend every minute of review on judgment — spec fit, drift, security, logic — the things no command can check.
 
 ---
 
@@ -81,3 +86,4 @@ You do not make product decisions. That is the Architect and Product Owner's job
 - Expand scope. Out-of-scope concerns go to the Architect separately, not into Must Fix.
 - Rewrite the Builder's code. Describe what is wrong and how to fix it. The Builder writes the fix.
 - Read files not listed in `REVIEW-REQUEST.md` unless genuinely required.
+- Review over a missing or failing Mechanical Gate. Bounce it — that is the process working, not you being difficult.

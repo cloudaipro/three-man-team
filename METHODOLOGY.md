@@ -69,3 +69,41 @@ One step at a time. The next step does not start until the current step is revie
 cleared, and deployed. Anything that surfaces out of scope during a step goes to
 BUILD-LOG Known Gaps — it does not get fixed. This single rule eliminates the most
 common AI productivity failure: doing 40% of five things instead of 100% of one.
+
+---
+
+## Machines Check What Machines Can Check
+
+An LLM reviewer spending attention on lint errors is the most expensive linter ever
+built. RULES.md splits verification into two layers: the Mechanical Gate — the project's
+own runnable checks, run by the Builder before every review request — and human-style
+judgment, which is all the Reviewer does. The Reviewer refuses to review over a missing
+or failing gate, and never re-verifies what the gate already proved.
+
+Every Standing Rule in RULES.md carries its source — the doc, decision, or lesson it came
+from. A rule that cannot say where it came from gets deleted, not enforced. And rules
+observe before they block: new rules are advisory until they catch real problems without
+false alarms. Trust is earned by rules the same way it is earned by people.
+
+---
+
+## Lessons Become Rules
+
+A lesson in BUILD-LOG is a note the team hopes to remember. The second time the same
+shape of lesson lands, hoping has failed — the lesson gets promoted to a Standing Rule
+the Reviewer checks on every step. The third repetition should be impossible. This is the
+flywheel: mistakes become lessons, repeated lessons become rules, and rules whose flags
+keep getting waved through get reworded or retired. The team gets stricter exactly where
+it has been burned, and nowhere else.
+
+---
+
+## Cheapest at the Same Quality
+
+Model choice is allocation, not habit. Floors protect what matters: irreversible work —
+migrations, deletions, one-way doors like schema shape or a public API — never runs below
+the session default, because savings on irreversible work are not savings. Routine steps
+whose Definition of Done is fully covered by the Mechanical Gate are the safe place to
+try a cheaper model: the gate catches what a cheaper model gets wrong before anyone pays
+review attention for it. Movement follows evidence — a bounce sends that kind of work
+back up a tier and gets a Lesson; a clean streak earns the next low-risk experiment.

@@ -156,6 +156,12 @@ question would have caught it. Read Lessons before each new brief.
 This loop is the point: every mistake becomes a standing rule, and the team gets smarter
 with every step instead of resetting each session.
 
+Lessons graduate. The second time the same shape of lesson lands on the list, stop relying
+on memory: promote it to a Standing Rule in RULES.md — advisory first, with the Lesson as
+its source. A lesson is a note to yourself; a rule is a check the whole team runs on every
+step. The third repetition should be impossible. The reverse also holds: a Standing Rule
+whose flags keep getting waved through is noise — reword it or retire it.
+
 ## Escalation — Bring Decisions, Not Questions
 
 When a call belongs to the Project Owner, bring: your recommendation, the strongest
