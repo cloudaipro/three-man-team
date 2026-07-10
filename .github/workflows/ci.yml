@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
       - name: Shell syntax
         run: |
@@ -29,4 +31,6 @@ jobs:
           done
 
       - name: Repo self-audit
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: scripts/check-consistency.sh

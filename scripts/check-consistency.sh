@@ -47,6 +47,60 @@ done
 [ "$MISSING_JSON" = 0 ] && ok "every registry version has a release file"
 
 echo ""
+echo "— Git tags & GitHub releases"
+
+# Fork convention starts at v1.6.0 — earlier versions shipped from upstream
+# without tags on this fork, and fabricating history helps nobody.
+TAG_FLOOR="v1.6.0"
+
+# The latest version is warned about, not failed: CI runs on the release
+# commit BEFORE it gets tagged, so a hard fail would deadlock every release.
+# A forgotten tag turns into a hard failure the moment the next version
+# enters the registry and the untagged one is no longer latest.
+TAGS_OK=1
+for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); do
+  # skip versions older than the floor
+  if [ "$v" != "$TAG_FLOOR" ] && \
+     [ "$(printf '%s\n%s\n' "$v" "$TAG_FLOOR" | sort -V | head -1)" = "$v" ]; then
+    continue
+  fi
+  if git tag -l "$v" | grep -q .; then
+    continue
+  fi
+  if [ "$v" = "$LATEST_V" ]; then
+    echo "  ⚠ $v (latest) is not tagged yet — finish the release: git tag $v && git push origin $v && gh release create $v"
+  else
+    problem "$v is in the registry but has no git tag — releases must be tagged"
+    TAGS_OK=0
+  fi
+done
+[ "$TAGS_OK" = 1 ] && ok "every released registry version ($TAG_FLOOR+) has a git tag"
+
+# GitHub releases: same rule, checked only when gh is available and authed
+# (CI passes GH_TOKEN; offline local runs skip without failing)
+if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+  REL_OK=1
+  for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); do
+    if [ "$v" != "$TAG_FLOOR" ] && \
+       [ "$(printf '%s\n%s\n' "$v" "$TAG_FLOOR" | sort -V | head -1)" = "$v" ]; then
+      continue
+    fi
+    if gh release view "$v" >/dev/null 2>&1; then
+      continue
+    fi
+    if [ "$v" = "$LATEST_V" ]; then
+      echo "  ⚠ $v (latest) has no GitHub release yet — gh release create $v"
+    else
+      problem "$v is in the registry but has no GitHub release"
+      REL_OK=0
+    fi
+  done
+  [ "$REL_OK" = 1 ] && ok "every released registry version ($TAG_FLOOR+) has a GitHub release"
+else
+  say "gh unavailable or unauthenticated — GitHub release check skipped (runs in CI)"
+fi
+
+echo ""
 echo "— Changelog"
 
 if ! grep -q "^## $LATEST_V " CHANGELOG.md; then
