@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.8.0 — 2026-07-17
+
+The theme: *the log must not grow forever* — token-usage fixes measured on a real project (a four-step build had grown BUILD-LOG to 38KB ≈ 10K tokens per read, and every session start paid ~500 tokens for version-check instructions it almost never used).
+
+- Improve: version check extracted to `playbooks/VERSION-CHECK.md` — the Architect role file's Session Start step 2 shrinks to a three-line pre-check (read `version_notified`, fetch `latest.json`, skip silently on match or network failure); the full update walk-through loads on demand only when an update exists. Ships in both template sets; `./upgrade` installs it with the other playbooks. **Critical**: role files updated without the new playbook reference a file that doesn't exist — the two changes must land together
+- Improve: BUILD-LOG rotation — new Anti-Drift rule in the Architect role file (both template sets and the Codex skill): when a step clears, or the file passes ~300 lines, completed-step details, closed Known Gaps, and full Lesson text move to `handoff/archive/BUILD-LOG-<YYYY-MM>.md`; BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and pointers. Nothing is deleted — history moves where it's read on demand instead of on every fallback load
+- Fix: stale `templates/project-folder/_temp/ARCHITECT.md` removed — an unreferenced ~6KB duplicate of an old role file that installs carried as an accidental-read hazard
+- Fix: codex-skill's bundled `releases/latest.json` had drifted from the repo registry again (v1.7.0 marked non-critical in the codex copy) — re-synced; the self-audit already fails on this drift
+- Tooling: `scripts/check-consistency.sh` parity lists now cover `playbooks/VERSION-CHECK.md` in both template sets, its byte-identical role-neutral copies, and its presence as an upgrade-tool source
+
 ## v1.7.0 — 2026-07-10
 
 The theme: *machines check what machines can check* — verification, allocation, and learning patterns adapted from [agent-steward](https://github.com/michaelchen73092/agent-steward)'s quality-gate/spend-audit loop, rebuilt as markdown process (no runtime dependency added).

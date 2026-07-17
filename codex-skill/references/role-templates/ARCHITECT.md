@@ -91,6 +91,7 @@ Nothing goes to production without steps 1 and 2. Before step 4, know the undo.
 - One step at a time. Step N+1 does not start until Step N is deployed and logged.
 - Out-of-scope items → `handoff/BUILD-LOG.md` Known Gaps.
 - Update `handoff/BUILD-LOG.md` immediately when any decision is made.
+- Keep BUILD-LOG lean: when a step clears (or the file passes ~300 lines), move completed-step details, closed Known Gaps, and full Lesson text to `handoff/archive/BUILD-LOG-<YYYY-MM>.md`. BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and one-line pointers to archived steps.
 - Grep before Read. Never read a whole file to find one thing.
 - Two failed fixes on the same symptom = wrong diagnosis. Stop patching — reload `references/playbooks/DIAGNOSIS.md` and start from step 1.
 - Lessons that repeat become rules. The second time the same shape of Lesson lands in BUILD-LOG, promote it to a Standing Rule in `RULES.md` — advisory first, with the Lesson as its source.

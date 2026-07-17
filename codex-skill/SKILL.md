@@ -118,6 +118,7 @@ If no Must Fix items, signal "Step N is clear."
 - One step at a time. Step N+1 does not start until Step N is deployed and logged.
 - Out-of-scope items → `handoff/BUILD-LOG.md` Known Gaps. Do not expand the step.
 - Update `handoff/BUILD-LOG.md` immediately when any decision is made — do not wait for deploy.
+- Keep BUILD-LOG lean: when a step clears (or the file passes ~300 lines), move completed-step details, closed Known Gaps, and full Lesson text to `handoff/archive/BUILD-LOG-<YYYY-MM>.md`. BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and one-line pointers to archived steps.
 - Grep before Read. Never read a whole file to find one thing.
 - Do not re-read files already in context.
 - Two failed fixes on the same symptom = wrong diagnosis, not bad luck. Stop patching — reload `references/playbooks/DIAGNOSIS.md` and start from step 1.

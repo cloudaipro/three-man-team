@@ -131,6 +131,7 @@ PARITY_FILES="RULES.md
 playbooks/PLANNING.md
 playbooks/DIAGNOSIS.md
 playbooks/BRIEF-EXAMPLES.md
+playbooks/VERSION-CHECK.md
 .claude/commands/architect.md
 .claude/commands/tmt-setup.md
 handoff/ARCHITECT-BRIEF.md
@@ -159,6 +160,7 @@ IDENTICAL_SETS="RULES.md:templates/project-folder/RULES.md templates/generic/RUL
 PLANNING.md:templates/project-folder/playbooks/PLANNING.md templates/generic/playbooks/PLANNING.md codex-skill/references/playbooks/PLANNING.md
 DIAGNOSIS.md:templates/project-folder/playbooks/DIAGNOSIS.md templates/generic/playbooks/DIAGNOSIS.md codex-skill/references/playbooks/DIAGNOSIS.md
 BRIEF-EXAMPLES.md:templates/project-folder/playbooks/BRIEF-EXAMPLES.md templates/generic/playbooks/BRIEF-EXAMPLES.md codex-skill/references/playbooks/BRIEF-EXAMPLES.md
+VERSION-CHECK.md:templates/project-folder/playbooks/VERSION-CHECK.md templates/generic/playbooks/VERSION-CHECK.md
 architect.md:templates/project-folder/.claude/commands/architect.md templates/generic/.claude/commands/architect.md
 tmt-setup.md:templates/project-folder/.claude/commands/tmt-setup.md templates/generic/.claude/commands/tmt-setup.md"
 
@@ -190,6 +192,7 @@ echo "— Upgrade tool sources"
 UPGRADE_SOURCES="playbooks/PLANNING.md
 playbooks/DIAGNOSIS.md
 playbooks/BRIEF-EXAMPLES.md
+playbooks/VERSION-CHECK.md
 .claude/commands/architect.md
 .claude/commands/tmt-setup.md
 .claude/skills/token-optimization.md

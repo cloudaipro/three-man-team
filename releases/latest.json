@@ -1,6 +1,12 @@
 {
-  "latest": "v1.7.0",
+  "latest": "v1.8.0",
   "versions": [
+    {
+      "version": "v1.8.0",
+      "released": "2026-07-17",
+      "critical": true,
+      "reason": "Architect Session Start now loads playbooks/VERSION-CHECK.md — updating role files without installing the new playbook breaks the version-check walk"
+    },
     {
       "version": "v1.7.0",
       "released": "2026-07-10",

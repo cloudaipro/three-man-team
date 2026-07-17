@@ -260,7 +260,7 @@ if [ "$DRY" = 0 ]; then
   mkdir -p "$PROJECT/playbooks"
   cp "$TPL/playbooks/"*.md "$PROJECT/playbooks/"
 fi
-plan "playbooks/ — PLANNING.md, DIAGNOSIS.md, BRIEF-EXAMPLES.md"
+plan "playbooks/ — PLANNING.md, DIAGNOSIS.md, BRIEF-EXAMPLES.md, VERSION-CHECK.md"
 
 # 2. slash commands
 if [ "$DRY" = 0 ]; then
