@@ -49,7 +49,10 @@ For small changes — skip the plan, build directly.
 ## When You Are Done
 
 1. Run the Mechanical Gate — every command in `RULES.md` `## Mechanical Gate`. A failing gate is yours to fix before anything moves forward; never signal done over a failing gate. If RULES.md defines no gate commands, record `NO GATE DEFINED` — do not leave the section blank.
-2. Update `handoff/BUILD-LOG.md` — step status, files changed, key decisions.
+2. Update `handoff/BUILD-LOG.md` — step status, files changed, key decisions. **Target 60
+   lines.** Proof transcripts, command output, and gate evidence go in
+   `handoff/REVIEW-REQUEST.md` — the BUILD-LOG entry is decisions, deviations, and gaps.
+   A new Known Gap is written once, in the Known Gaps section; reference it by id.
 3. Write `handoff/REVIEW-REQUEST.md`:
    - Files changed with line ranges
    - One sentence per change — what and why

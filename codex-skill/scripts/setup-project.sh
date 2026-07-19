@@ -190,6 +190,24 @@ ROLEEOF
     echo "  ✓ Created RULES.md (Architect drafts the gate at first brief)"
   fi
 
+  # manifest.md — version marker the skill's version check reads.
+  # Stamped from the bundled registry, never from the template's own text: a
+  # hardcoded version in the template drifts silently every release (it sat at
+  # v1.5.0 through four of them, unnoticed, because nothing installed it).
+  if [ -f "$dest/manifest.md" ]; then
+    echo "  ✓ manifest.md already exists — not overwriting"
+  else
+    ver="$(grep -o '"latest": *"[^"]*"' "$SCRIPT_DIR/releases/latest.json" 2>/dev/null | cut -d'"' -f4)"
+    if [ -z "$ver" ]; then
+      echo "  ✗ could not read a version from $SCRIPT_DIR/releases/latest.json — manifest.md not created"
+      echo "    (the skill's version check needs it; re-run once the bundled registry is readable)"
+    else
+      sed "s/^version:.*/version: $ver/; s/^installed:.*/installed: $(date +%Y-%m-%d)/" \
+        "$TPL/project/manifest.md" > "$dest/manifest.md"
+      echo "  ✓ Created manifest.md ($ver)"
+    fi
+  fi
+
   # Handoff templates
   mkdir -p "$dest/handoff"
   for hf in ARCHITECT-BRIEF.md BUILD-LOG.md REVIEW-REQUEST.md REVIEW-FEEDBACK.md SESSION-CHECKPOINT.md; do

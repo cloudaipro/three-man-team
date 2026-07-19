@@ -1,6 +1,12 @@
 {
-  "latest": "v1.8.0",
+  "latest": "v1.9.0",
   "versions": [
+    {
+      "version": "v1.9.0",
+      "released": "2026-07-19",
+      "critical": true,
+      "reason": "The BUILD-LOG size check lives in RULES.md's Mechanical Gate — role files updated without the RULES.md gate row leave the rotation rule with no mechanical trigger, which is the failure this release fixes"
+    },
     {
       "version": "v1.8.0",
       "released": "2026-07-17",

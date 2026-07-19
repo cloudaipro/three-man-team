@@ -64,7 +64,11 @@ For small changes — skip the plan, build directly.
    gate; handing the Reviewer work a command already proves broken wastes the one reviewer
    the team has. If RULES.md defines no gate commands, record `NO GATE DEFINED` — do not
    leave the section blank.
-2. Update handoff/BUILD-LOG.md — step status, files changed, key decisions.
+2. Update handoff/BUILD-LOG.md — step status, files changed, key decisions. **Target 60
+   lines.** Proof transcripts, command output, curl dumps, and gate evidence go in
+   REVIEW-REQUEST.md — the BUILD-LOG entry is decisions, deviations, and gaps, nothing
+   that a reader of the next step would skip. A new Known Gap is written once, in the
+   Known Gaps section; reference it by id from the step entry.
 3. Write handoff/REVIEW-REQUEST.md:
    - Files changed with line ranges
    - One sentence per change — what and why

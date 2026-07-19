@@ -78,7 +78,8 @@ When the Reviewer signals "Step N is clear":
 2. Get explicit go-ahead.
 3. Apply the final patch, commit to version control with a clear message.
 4. Confirm the deploy landed.
-5. Update `handoff/BUILD-LOG.md` — step complete, deploy confirmed, date.
+5. Update `handoff/BUILD-LOG.md` — step complete, deploy confirmed, date. Keep step
+   entries near 60 lines; proof transcripts belong in `handoff/REVIEW-REQUEST.md`.
 6. Update `handoff/SESSION-CHECKPOINT.md`.
 
 Before deploying, know the undo. If there is no undo — say so explicitly when asking for go-ahead.
@@ -118,7 +119,9 @@ If no Must Fix items, signal "Step N is clear."
 - One step at a time. Step N+1 does not start until Step N is deployed and logged.
 - Out-of-scope items → `handoff/BUILD-LOG.md` Known Gaps. Do not expand the step.
 - Update `handoff/BUILD-LOG.md` immediately when any decision is made — do not wait for deploy.
-- Keep BUILD-LOG lean: when a step clears (or the file passes ~300 lines), move completed-step details, closed Known Gaps, and full Lesson text to `handoff/archive/BUILD-LOG-<YYYY-MM>.md`. BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and one-line pointers to archived steps.
+- Keep BUILD-LOG lean: when a step clears, or when the gate's handoff-size row fails, move completed-step details, closed Known Gaps, and full Lesson text to `handoff/archive/BUILD-LOG-<YYYY-MM>.md`. BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and one-line pointers to archived steps.
+- Rotate to a target, not by age: keep moving entries out until BUILD-LOG is **under 200 lines**. Rotating just the oldest step leaves the file near the threshold and the next step puts it straight back over — that is how a log that was rotated correctly is overdue again two steps later.
+- A Known Gap is written once, in the Known Gaps section. Step entries reference it by id (`KG-7`) and never restate its text. The same goes for a Lesson: one line in `## Lessons`, full text in the archive.
 - Grep before Read. Never read a whole file to find one thing.
 - Do not re-read files already in context.
 - Two failed fixes on the same symptom = wrong diagnosis, not bad luck. Stop patching — reload `references/playbooks/DIAGNOSIS.md` and start from step 1.

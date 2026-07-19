@@ -14,13 +14,25 @@ signaling done and records the results in handoff/REVIEW-REQUEST.md. A failing g
 reaches the Reviewer — it is the Builder's to fix.*
 
 Drafted at setup from this project's own tooling — test runner, linter, type checker, build.
-If the project has no runnable checks yet, write `NO GATE DEFINED` below and make adding the
-first check an early step; a project that cannot verify itself mechanically pays for it in
-review cycles.
+If the project has no runnable checks yet, keep the handoff-size row below and write
+`NO GATE DEFINED` beside it for the project's own checks; a project that cannot verify itself
+mechanically pays for it in review cycles.
 
 | Command | Proves |
 |---|---|
+| `awk 'END{exit (NR>400)}' handoff/BUILD-LOG.md` | BUILD-LOG has not outgrown rotation. Ships with the framework — do not delete it |
 | `[command]` | [What passing means — e.g. "no lint errors", "all tests green", "build compiles"] |
+
+The handoff-size row is the one gate command the framework provides. It is here because the
+Builder writes BUILD-LOG and the Architect rotates it — so without a mechanical check, the
+person creating the growth never sees the threshold, and the person who can act on it only
+notices by accident. Failing this row is not a code defect: signal it to the Architect, who
+rotates. Do not "fix" it by trimming your own entry after the fact.
+
+It is written with `awk`, not `test "$(wc -l < …)"`, on purpose: with the file missing, the
+`wc` form exits 0 under zsh (empty string compares as an integer) and reports a green gate
+for a BUILD-LOG that is not there. The `awk` form exits non-zero for missing, oversized, and
+unreadable alike — L-1's rule, applied to the framework's own gate command.
 
 ## Standing Rules
 *Project-specific rules the Reviewer checks on every step. Each rule carries its source —

@@ -36,6 +36,21 @@ else
   ok "codex-skill bundled registry matches releases/latest.json"
 fi
 
+# The Codex project manifest template carries the version a fresh install is
+# stamped with. It drifted to v1.5.0 across four releases because nothing
+# installed it and nothing checked it — assert it here so that cannot recur.
+CODEX_TPL_MANIFEST="codex-skill/templates/project/manifest.md"
+if [ ! -f "$CODEX_TPL_MANIFEST" ]; then
+  problem "$CODEX_TPL_MANIFEST is missing — Codex installs have no version marker"
+else
+  CODEX_TPL_V="$(sed -n 's/^version: *//p' "$CODEX_TPL_MANIFEST" | head -1)"
+  if [ "$CODEX_TPL_V" != "$LATEST_V" ]; then
+    problem "$CODEX_TPL_MANIFEST says $CODEX_TPL_V but the registry latest is $LATEST_V — fresh Codex installs would be stamped stale"
+  else
+    ok "Codex project manifest template matches the registry latest"
+  fi
+fi
+
 # Every version listed in the registry must have its release file
 MISSING_JSON=0
 for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); do
