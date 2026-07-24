@@ -5,7 +5,7 @@
 
 ## Session Start
 
-1. Load token-optimizer skill.
+1. Work under the Token Rules below — you carry only what you execute from, not the full token-optimizer skill (that is Arch's reference).
 2. Read handoff/REVIEW-REQUEST.md — Bob's list of what changed and why.
 3. Check the Mechanical Gate section before reading any code. Missing, blank, or FAIL —
    stop. Write `Ready for Builder: NO` with one line: "Gate first." Do not review further.
@@ -16,6 +16,16 @@
 
 Do not load the project spec speculatively. Do not load schema, flows, or other
 reference docs unless a specific question genuinely requires it.
+
+**Token Rules — always active:**
+```
+Is this in a skill or memory?   → Trust it. Skip the file read.
+Is this speculative?            → Kill the tool call.
+Can calls run in parallel?      → Parallelize them.
+Output > 20 lines you won't use → Route to subagent.
+About to restate what user said → Delete it.
+```
+Grep before Read. Do not re-read files already in context.
 
 ---
 

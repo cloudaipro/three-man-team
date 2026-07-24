@@ -1,0 +1,30 @@
+{
+  "version": "v2.2.0",
+  "released": "2026-07-24",
+  "from_version": "v2.1.0",
+  "arch_opening": "There is an update available — version 2.2.0. It applies this framework's own thesis to itself. Every spawned Builder and Reviewer was loading the full ~668-token token-optimizer essay first thing, but only the five-rule decision block and grep-before-read are execution-relevant to a subagent. On the respawn-heavy design we shipped in v2.0.0 — a fresh Builder at each checkpoint — that essay is re-loaded per respawn and then re-sent every turn of the subagent's life, which is the quadratic carry axis, not a one-time load. This release moves a compact Token Rules block inline into the Builder and Reviewer role files, drops the essay-load from their spin-ups, and states the model-routing policy once in Model Allocation instead of three times in the Architect file. About 578 tokens leave each subagent's permanent floor. It only touches the Claude build; the Codex build was already lean. I'll show you what applies to your role files.",
+  "changes": [
+    {
+      "id": "subagent-inline-token-rules",
+      "type": "improvement",
+      "title": "Subagents carry a compact Token Rules block inline; stop loading the full essay",
+      "what_changed": "BUILDER.md and REVIEWER.md (both template sets) gain a compact Token Rules block — the five-rule decision table plus grep-before-read / no-re-read — and their Session Start no longer loads the token-optimizer skill. The Architect's Bob/Richard spin-up prompts drop 'Load token-optimizer skill first.' The Architect still loads the full essay at its own Session Start.",
+      "old_behavior": "Every spawned Bob and Richard was told to load the full ~668-token token-optimizer essay first, of which five of seven sections (Why This Matters, RTK, Role-Scoped Loading, Checkpoint-First, CLAUDE.md-as-Router) are Architect/reference material a subagent never acts on. Under the v2.0.0 respawn-at-checkpoint design, that essay reloaded on each respawn and was re-sent every following turn.",
+      "new_behavior": "The subagent carries ~90 tokens of execution rules inline in the role file it already reads, and the ~668-token essay is dropped from its context — roughly 578 tokens off each Builder/Reviewer's permanent floor, saved on every turn and every respawn. The inline block is deliberate point-of-use repetition (accuracy-safe per 2026 prompt-repetition findings) and also means a subagent whose skill is uninstalled still has its token discipline.",
+      "user_impact_plain": "The biggest recurring cost is what the numerous, respawned, long-lived subagents carry turn to turn — not what the one Architect loads once. This trims that floor without removing any rule the subagent actually uses.",
+      "how_to_assess": "Read the user's BUILDER and REVIEWER role files (names from manifest.md). If Session Start still says 'Load token-optimizer skill' and there is no inline Token Rules block, offer the v2.2.0 edit, preserving their personas. Check the Architect's spin-up prompts still don't re-add the skill-load for subagents.",
+      "user_decision": "Want me to move the Token Rules inline into your Builder and Reviewer files and drop the essay-load from the spin-ups? Personas untouched."
+    },
+    {
+      "id": "architect-model-routing-single-source",
+      "type": "improvement",
+      "title": "Model-routing policy stated once in Model Allocation, not three times",
+      "what_changed": "The Claude ARCHITECT.md (both sets) stated the sonnet/haiku defaults and alias guidance in three places — the Builder spin-up, the Reviewer spin-up, and the Model Allocation table. The spin-ups now carry a one-line model default plus a pointer to Model Allocation, which becomes the single source for defaults, floors, aliases, and raise-a-tier policy.",
+      "old_behavior": "Model routing was restated ~3x in the Architect's always-carried role file — a three-way drift surface and redundant floor tokens on the longest-lived agent.",
+      "new_behavior": "One authoritative Model Allocation section; spin-ups reference it. Fewer tokens on every Architect turn and no way for the three copies to drift apart.",
+      "user_impact_plain": "The Architect role file is carried the entire session. Stating the routing policy once instead of three times trims the floor and removes a maintenance hazard.",
+      "how_to_assess": "Read the Architect role file's spin-up prompts and Model Allocation section. If the spin-ups still contain full sonnet/haiku rationale paragraphs, offer to collapse them to a pointer while keeping Model Allocation as the source of truth.",
+      "user_decision": "Want me to collapse the duplicated routing prose in your Architect file to a single Model Allocation source?"
+    }
+  ]
+}
