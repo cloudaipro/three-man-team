@@ -1,36 +1,60 @@
 # Codex Skill — Porting Notes
 
 Where the Codex port **intentionally diverges** from the Claude build of Three Man Team, and
-why. Read this before "syncing" the two: two of the v2.0.0 cost optimizations do not translate
-literally, and copying the Claude wording into the Codex skill would be wrong, not helpful.
+why. Read this before "syncing" the two: the wording is not always parallel, and copying the
+Claude text into the Codex skill can be wrong rather than helpful.
 
 The model-agnostic v2.0.0 wins — Context Budget (cap ~90K, checkpoint, spawn a fresh role from the
 handoff, ephemeral command output, per-step `Cost:` line) and the "what you carry, not what you
 load" reframe — port verbatim and are already in the Codex role templates, `SKILL.md`, and
-`references/token-optimization.md`. The two below do not.
+`references/token-optimization.md`.
+
+The two sections below are where the builds differ. **§1 (model routing) has since converged** —
+v2.0.0 documented it as "does not exist on Codex," but GPT-5.6 (GA 2026-07-09) gave Codex a real
+per-tier knob, so v2.1.0 wires the same Architect / Builder / Reviewer routing the Claude build
+has; the section is kept as the record of *how* it converged, so no one re-opens it. **§2 (the
+1-hour prompt cache) is still Claude-Code-only** and remains a live divergence.
 
 ---
 
-## 1. Model routing (Sonnet / Haiku) — does not exist on Codex
+## 1. Model routing — converged in v2.1.0 (GPT-5.6 Sol / Terra / Luna)
 
-**Claude build:** the Architect spins up the Builder on `"sonnet"` and the Reviewer on `"haiku"`
-by default (passing the `model` alias to the Agent tool), keeping Opus for its own orchestration.
-Bounded execution against a written brief runs cheaper; judgment stays on the top tier.
+**History.** At v2.0.0 this was a hard divergence. The Claude build routes by model alias — Builder
+on `"sonnet"`, Reviewer on `"haiku"`, Architect on Opus — and Codex had no equivalent: it spawned
+sub-agents by `agent_type` and its only cost/quality knob was reasoning effort. Hardcoding
+`model: "sonnet"` would have been a dead instruction, so the skill framed the principle as *match
+effort to the role* and named the Sonnet / Haiku / Opus tiers only as the Claude build's expression
+of it. The section carried an Open item: *if the Codex CLI ever exposes per-sub-agent model
+selection, name the exact parameter.*
 
-**Why it does not port:** Codex has no Sonnet/Haiku. It spawns sub-agents by `agent_type`
-(`"worker"` for the Builder, `"default"` for the Reviewer) and its cost/quality knob is reasoning
-effort, not a Claude model alias. Hardcoding `model: "sonnet"` into the Codex skill would be a
-dead instruction.
+**What changed.** GPT-5.6 (GA 2026-07-09) is that parameter. It ships three durable capability
+tiers you select per model — **Sol** (`gpt-5.6-sol`, flagship reasoning ceiling), **Terra**
+(`gpt-5.6-terra`, balanced everyday agentic coding, ~2× cheaper), **Luna** (`gpt-5.6-luna`, fastest
+and cheapest) — set in `~/.codex/config.toml` via `model` / `model_reasoning_effort`, plus a real
+per-sub-agent override. That maps one-to-one onto the Claude build's Opus / Sonnet / Haiku.
 
-**What the Codex skill does instead:** frames the principle as *match effort to the role* — spawn
-the Builder and Reviewer at the working profile / reasoning effort their bounded, gate-backed task
-needs, and reserve the highest effort for irreversible or load-bearing steps. The Sonnet / Haiku /
-Opus tiers are named only as the Claude build's *expression* of the same idea, not as a Codex
-setting. Lives in `references/role-templates/ARCHITECT.md` (Context Budget), `SKILL.md` (Job 2),
-and `references/token-optimization.md` (lever 2).
+**What the Codex skill does now.** Routes the three roles by tier, the direct analog of the Claude
+build:
 
-**Open item:** if the Codex CLI exposes explicit per-sub-agent model or reasoning-effort selection,
-tighten the guidance to name the exact parameter instead of the generic "working profile / effort".
+| Role | Codex tier | Claude build |
+|---|---|---|
+| Architect | **Sol** (`gpt-5.6-sol`) — orchestration, planning, judgment, deploy gate | Opus |
+| Builder | **Terra** (`gpt-5.6-terra`) — bounded execution against a written brief | Sonnet |
+| Reviewer | **Luna** (`gpt-5.6-luna`) — bounded, gate-backed review of a small listed diff | Haiku |
+
+Reasoning effort is the *within-tier* knob: keep the highest effort (`xhigh` / `max`, or Sol's
+`ultra` mode) for irreversible steps and load-bearing decisions, and run gate-backed routine work
+at the effort its tier already covers. Lives in `references/role-templates/ARCHITECT.md` (Context
+Budget + spawn instructions), `SKILL.md` (Job 2), and `references/token-optimization.md` (lever 2).
+
+**Routing caveat (real).** A Sol parent does **not** delegate to cheaper tiers by default — spawned
+sub-agents inherit the parent's model unless multi-agent routing is enabled (Codex issue #31814;
+set the `features.multi_agent_v2` routing fields, e.g. `hide_spawn_agent_metadata = false`, or use a
+per-role model override such as `review_model`). Without it the Terra / Luna spawns silently run as
+Sol and the routing saving is lost. Verify a spawned sub-agent's actual model once per environment.
+
+**Open item:** the exact per-sub-agent routing field is still settling in the Codex CLI. The tier
+*assignment* above is durable; if the override syntax changes, update the caveat, not the routing.
 
 ---
 
@@ -54,6 +78,8 @@ guidance. Until then, do not add a cache setup step to the Codex skill.
 
 ---
 
-*Origin: v2.0.0 ("context is the cost"). The Claude build's role files carry the literal Sonnet /
-Haiku routing and the `ENABLE_PROMPT_CACHING_1H` install step; this file records why the Codex port
-does not, so the divergence stays a deliberate choice rather than a drift someone "fixes" later.*
+*Origin: v2.0.0 ("context is the cost"); §1 converged at v2.1.0 when GPT-5.6 gave Codex per-tier
+model selection. The Claude build's role files carry the literal Opus / Sonnet / Haiku routing and
+the `ENABLE_PROMPT_CACHING_1H` install step; the Codex build now carries the Sol / Terra / Luna
+analog (§1) but still omits the cache step (§2). This file records why — so the remaining
+divergence stays a deliberate choice rather than a drift someone "fixes" later.*
