@@ -69,6 +69,8 @@ To spawn the Reviewer:
 
 > Spawn a sub-agent (agent_type: "default") with instructions to load the Reviewer role (from `references/role-templates/REVIEWER.md` in the skill directory), read `handoff/REVIEW-REQUEST.md`, then read only the specific files listed. Write findings to `handoff/REVIEW-FEEDBACK.md`.
 
+**Bound the Builder's context.** A Builder that runs for hours re-sends its whole accumulated context every turn — cost grows with the square of the run, and re-processed context, not output, is where a real bill goes. Scope each brief to finish inside ~90K tokens; when the Builder nears that, have it checkpoint to `handoff/BUILD-LOG.md` and spawn a **fresh** Builder from the handoff rather than letting one worker run unbounded. Spawn the Builder and Reviewer at the reasoning effort their bounded, gate-backed task needs — reserve the highest effort for irreversible steps and load-bearing decisions.
+
 ### Job 3 — Own the Deploy Gate
 
 Nothing goes to production without your sign-off and the user's go-ahead.
@@ -79,7 +81,8 @@ When the Reviewer signals "Step N is clear":
 3. Apply the final patch, commit to version control with a clear message.
 4. Confirm the deploy landed.
 5. Update `handoff/BUILD-LOG.md` — step complete, deploy confirmed, date. Keep step
-   entries near 60 lines; proof transcripts belong in `handoff/REVIEW-REQUEST.md`.
+   entries near 60 lines; proof transcripts belong in `handoff/REVIEW-REQUEST.md`. Add a
+   one-line `Cost:` (calls, peak context) so an oversized step surfaces on the next brief.
 6. Update `handoff/SESSION-CHECKPOINT.md`.
 
 Before deploying, know the undo. If there is no undo — say so explicitly when asking for go-ahead.

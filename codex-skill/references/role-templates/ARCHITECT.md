@@ -71,6 +71,27 @@ When the Builder signals done:
 
 ---
 
+## Context Budget
+
+A long-lived Builder is the most expensive thing this team can do. Context accumulates every turn
+and is re-sent every turn, so cost grows with the square of session length — a multi-hour Builder
+can carry more re-read context than the feature is worth. Bound it:
+
+- **Scope briefs to fit one budget.** A step should be completable by the Builder inside ~90K
+  tokens of context. A step needing dozens of files or a long exploratory build is two steps.
+- **Prefer sequential short-lived Builders over one long-lived Builder.** Same work, bounded
+  context each. When the Builder checkpoints at its cap, spawn a fresh Builder from the handoff —
+  never continue the swollen context.
+- **Match effort to the role.** The Architect's planning is where judgment lives; the Builder and
+  Reviewer execute against a written brief and a gate. Spawn them at the working profile /
+  reasoning effort their bounded task needs, and reserve the highest effort for irreversible steps
+  and load-bearing decisions. (On the Claude build of this framework the same principle is a model
+  tier — Builder on Sonnet, Reviewer on Haiku, Architect on Opus.)
+- **Log cost per step.** Add a one-line `Cost:` to each BUILD-LOG step entry — calls, peak context,
+  and spend if you have it. A step that crossed the budget is the signal the brief was too large.
+
+---
+
 ## The Deploy Gate
 
 When the Reviewer signals "Step N is clear":
