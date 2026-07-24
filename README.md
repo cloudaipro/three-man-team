@@ -12,16 +12,15 @@
 
 ---
 
-## What's New — v2.0.0
+## What's New — v2.1.0
 
-**Context is the cost.** Every token rule the framework shipped through v1.9 cut what a session *loads*. Measured against a real multi-hour session that cost ~$156 CAD, all file reads combined were about **0.1%** of the bill — while **94.6%** went to re-processing context that was assembled once and then re-sent, and re-billed, on every following turn. One Builder subagent ran 383 calls over six hours, context climbing 21K → 347K tokens, never reset — **52% of the entire day**. This release optimizes what agents *carry*, not what they load.
+**The divergence converged.** v2.0.0 routed the Claude build by model tier — Builder on Sonnet, Reviewer on Haiku, Architect on Opus — but the Codex port could not follow: Codex had no tier knob, only reasoning effort, so `codex-skill/PORTING-NOTES.md` recorded model routing as the one v2.0.0 win that did not port. GPT-5.6's **Sol / Terra / Luna** tiers (GA 2026-07-09) are that missing knob. This release wires the Codex build's three roles to the three tiers, the direct analog of the Claude routing.
 
-- **Context budgets** — every role caps its context and resets. Builder checkpoints at ~90K and the Architect respawns a fresh Builder from the handoff instead of continuing a 300K context. Replayed on the real trace, the expensive Builder drops from **$58.87 to $8.96**.
-- **Model-tier routing** — Architect stays on Opus for judgment; Builder runs on Sonnet and Reviewer on Haiku by default, with floors that raise the tier for irreversible or security-sensitive steps.
-- **Keep the cache warm** — one line, `ENABLE_PROMPT_CACHING_1H=1`, stops handoff gaps from re-billing the whole context. On the measured session that waste alone was **$25**.
-- **The doc, reframed** — `token-optimization.md` now leads with the axis that holds the cost: what you carry, not what you load. Modelled together, the three changes cut the measured workload **71.6%**.
+- **Codex model-tier routing** — Architect on **Sol** (`gpt-5.6-sol`), Builder on **Terra** (`gpt-5.6-terra`), Reviewer on **Luna** (`gpt-5.6-luna`): flagship judgment on top, bounded execution against a written brief one tier down, gate-backed review at the cheapest. Reasoning effort is the within-tier knob, top effort (`xhigh` / `max`, or Sol's `ultra`) held for irreversible steps.
+- **Porting notes, converged** — `PORTING-NOTES.md` §1 goes from "does not exist on Codex" to "converged in v2.1.0," keeping the history so no one re-opens it, plus the real caveat: a Sol parent runs its sub-agents as Sol unless multi-agent routing is enabled (Codex issue #31814).
+- **Claude build unchanged** — content changes are confined to `codex-skill/`; Opus / Sonnet / Haiku routing and the 1-hour prompt cache (§2, still Claude-Code-only) are untouched.
 
-**v1.9.0** made BUILD-LOG size a mechanical gate. **v1.8.0** made BUILD-LOG rotation a rule and moved the version check into an on-demand playbook. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
+**v2.0.0** made *context the cost* — per-role context budgets, model-tier routing, and the 1-hour prompt cache. **v1.9.0** made BUILD-LOG size a mechanical gate. **v1.8.0** made BUILD-LOG rotation a rule and moved the version check into an on-demand playbook. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
 
 See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 

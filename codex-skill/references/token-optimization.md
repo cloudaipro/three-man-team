@@ -37,11 +37,12 @@ Three levers move the 94.6%, in order of impact:
 1. **Bound each role's context** — cap at ~90K tokens, then checkpoint and spawn a fresh role
    from the handoff instead of continuing the swollen context (see Context Budget in the role
    templates). This is the dominant term.
-2. **Match effort to the role** — the Architect plans; the Builder and Reviewer execute against a
-   brief and a gate, so spawn them at the working profile / reasoning effort their bounded task
-   needs and reserve the top effort for irreversible or load-bearing steps. (The Claude build of
-   this framework expresses the same idea as a model tier — Builder on Sonnet, Reviewer on Haiku,
-   Architect on Opus.)
+2. **Route each role to its model tier** — the Architect plans; the Builder and Reviewer execute
+   against a brief and a gate. Run the Architect on **Sol** (`gpt-5.6-sol`), the Builder on **Terra**
+   (`gpt-5.6-terra`), and the Reviewer on **Luna** (`gpt-5.6-luna`) — the direct analog of the
+   Claude build's Opus / Sonnet / Haiku. Reasoning effort is the within-tier knob; reserve the top
+   effort for irreversible or load-bearing steps. (A Sol parent does not delegate to cheaper tiers
+   by default — see `PORTING-NOTES.md` §1 for the sub-agent routing caveat.)
 3. **Keep the harness cache warm** — if you run this team under Claude Code, set
    `ENABLE_PROMPT_CACHING_1H=1` so handoff gaps in the 5-to-60-minute band don't re-bill the whole
    context at write price; under Codex the runtime manages caching for you.

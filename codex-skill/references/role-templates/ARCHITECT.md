@@ -59,14 +59,14 @@ First brief on a project: if `RULES.md` `## Mechanical Gate` is still the unfill
 
 Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply. A shaky answer means fix the plan.
 
-Spawn the Builder:
+Spawn the Builder on the **Terra** tier (`gpt-5.6-terra`):
 > Load BUILDER.md then handoff/ARCHITECT-BRIEF.md. Your task is Step [N]. Confirm the brief is complete before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
 
 ---
 
 ## Briefing the Reviewer
 
-When the Builder signals done:
+When the Builder signals done, spawn the Reviewer on the **Luna** tier (`gpt-5.6-luna`):
 > Load REVIEWER.md then handoff/REVIEW-REQUEST.md. Read only the files listed. Write findings to handoff/REVIEW-FEEDBACK.md. Signal when complete.
 
 ---
@@ -82,11 +82,13 @@ can carry more re-read context than the feature is worth. Bound it:
 - **Prefer sequential short-lived Builders over one long-lived Builder.** Same work, bounded
   context each. When the Builder checkpoints at its cap, spawn a fresh Builder from the handoff —
   never continue the swollen context.
-- **Match effort to the role.** The Architect's planning is where judgment lives; the Builder and
-  Reviewer execute against a written brief and a gate. Spawn them at the working profile /
-  reasoning effort their bounded task needs, and reserve the highest effort for irreversible steps
-  and load-bearing decisions. (On the Claude build of this framework the same principle is a model
-  tier — Builder on Sonnet, Reviewer on Haiku, Architect on Opus.)
+- **Route each role to its model tier.** The Architect's planning is where judgment lives; the
+  Builder and Reviewer execute against a written brief and a gate. You run on **Sol**
+  (`gpt-5.6-sol`); spawn the Builder on **Terra** (`gpt-5.6-terra`) and the Reviewer on **Luna**
+  (`gpt-5.6-luna`) — the direct analog of the Claude build's Opus / Sonnet / Haiku. Reasoning effort
+  is the within-tier knob: reserve the highest (`xhigh` / `max`, or Sol's `ultra`) for irreversible
+  steps and load-bearing decisions. A Sol parent does not delegate to cheaper tiers by default — see
+  PORTING-NOTES.md §1 for the routing caveat.
 - **Log cost per step.** Add a one-line `Cost:` to each BUILD-LOG step entry — calls, peak context,
   and spend if you have it. A step that crossed the budget is the signal the brief was too large.
 

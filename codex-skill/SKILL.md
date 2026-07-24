@@ -11,11 +11,13 @@ Transform this Codex session into a structured three-agent team with clear roles
 
 You (Codex) are the **Architect** — the main session agent. When work is ready to build, you spawn a **Builder** sub-agent. When the Builder finishes, you spawn a **Reviewer** sub-agent. Everything runs in your session; you orchestrate the flow.
 
-| Role | Agent | Responsibility |
-|---|---|---|
-| **Architect** | You (current session) | Plan, diagnose, write briefs, spawn Builder/Reviewer, own deploy gate |
-| **Builder** | Spawned sub-agent (worker) | Read brief, build, self-review, write review request |
-| **Reviewer** | Spawned sub-agent | Review diff against spec, write review feedback |
+| Role | Agent | Model tier | Responsibility |
+|---|---|---|---|
+| **Architect** | You (current session) | **Sol** (`gpt-5.6-sol`) | Plan, diagnose, write briefs, spawn Builder/Reviewer, own deploy gate |
+| **Builder** | Spawned sub-agent (worker) | **Terra** (`gpt-5.6-terra`) | Read brief, build, self-review, write review request |
+| **Reviewer** | Spawned sub-agent | **Luna** (`gpt-5.6-luna`) | Review diff against spec, write review feedback |
+
+Tiers mirror the Claude build's Opus / Sonnet / Haiku routing: judgment on the top tier, bounded execution one tier down, gate-backed review at the cheapest. See `PORTING-NOTES.md` §1 for the config and the sub-agent routing caveat.
 
 ## Session Start
 
@@ -63,13 +65,13 @@ Write the brief. Spawn Builder. When Builder signals done, spawn Reviewer. Manag
 
 To spawn the Builder:
 
-> Spawn a worker agent (agent_type: "worker") with instructions to load the Builder role (from `references/role-templates/BUILDER.md` in the skill directory), read `handoff/ARCHITECT-BRIEF.md`, build Step [N], run the Mechanical Gate from `RULES.md` and record the results, write `handoff/REVIEW-REQUEST.md`, and update `handoff/BUILD-LOG.md`. Wait for it to finish before spawning the Reviewer.
+> Spawn a worker agent (agent_type: "worker") on the **Terra** tier (`gpt-5.6-terra`) with instructions to load the Builder role (from `references/role-templates/BUILDER.md` in the skill directory), read `handoff/ARCHITECT-BRIEF.md`, build Step [N], run the Mechanical Gate from `RULES.md` and record the results, write `handoff/REVIEW-REQUEST.md`, and update `handoff/BUILD-LOG.md`. Wait for it to finish before spawning the Reviewer.
 
 To spawn the Reviewer:
 
-> Spawn a sub-agent (agent_type: "default") with instructions to load the Reviewer role (from `references/role-templates/REVIEWER.md` in the skill directory), read `handoff/REVIEW-REQUEST.md`, then read only the specific files listed. Write findings to `handoff/REVIEW-FEEDBACK.md`.
+> Spawn a sub-agent (agent_type: "default") on the **Luna** tier (`gpt-5.6-luna`) with instructions to load the Reviewer role (from `references/role-templates/REVIEWER.md` in the skill directory), read `handoff/REVIEW-REQUEST.md`, then read only the specific files listed. Write findings to `handoff/REVIEW-FEEDBACK.md`.
 
-**Bound the Builder's context.** A Builder that runs for hours re-sends its whole accumulated context every turn — cost grows with the square of the run, and re-processed context, not output, is where a real bill goes. Scope each brief to finish inside ~90K tokens; when the Builder nears that, have it checkpoint to `handoff/BUILD-LOG.md` and spawn a **fresh** Builder from the handoff rather than letting one worker run unbounded. Spawn the Builder and Reviewer at the reasoning effort their bounded, gate-backed task needs — reserve the highest effort for irreversible steps and load-bearing decisions.
+**Bound the Builder's context.** A Builder that runs for hours re-sends its whole accumulated context every turn — cost grows with the square of the run, and re-processed context, not output, is where a real bill goes. Scope each brief to finish inside ~90K tokens; when the Builder nears that, have it checkpoint to `handoff/BUILD-LOG.md` and spawn a **fresh** Builder from the handoff rather than letting one worker run unbounded. Route each role to its model tier — you (Architect) on **Sol**, the Builder on **Terra**, the Reviewer on **Luna** — and set reasoning effort within the tier to what the bounded, gate-backed task needs, reserving the highest effort (`xhigh` / `max`, or Sol's `ultra` mode) for irreversible steps and load-bearing decisions. A Sol parent does not delegate to cheaper tiers by default; see `PORTING-NOTES.md` §1 for the sub-agent routing caveat.
 
 ### Job 3 — Own the Deploy Gate
 
