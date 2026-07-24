@@ -12,15 +12,15 @@
 
 ---
 
-## What's New — v2.1.0
+## What's New — v2.2.0
 
-**The divergence converged.** v2.0.0 routed the Claude build by model tier — Builder on Sonnet, Reviewer on Haiku, Architect on Opus — but the Codex port could not follow: Codex had no tier knob, only reasoning effort, so `codex-skill/PORTING-NOTES.md` recorded model routing as the one v2.0.0 win that did not port. GPT-5.6's **Sol / Terra / Luna** tiers (GA 2026-07-09) are that missing knob. This release wires the Codex build's three roles to the three tiers, the direct analog of the Claude routing.
+**Trim the floor the busiest agents carry.** A framework whose thesis is *context is the cost* was making every spawned Builder and Reviewer load the full ~668-token token-optimizer essay first — of which only the five-rule block and grep-before-read are execution-relevant to a subagent. Under v2.0.0's respawn-at-checkpoint design, that essay reloads per respawn and is re-sent every turn of the subagent's life (the O(N²) carry axis). This release cuts what the subagents carry — validated against 2026 practice on agent token economics.
 
-- **Codex model-tier routing** — Architect on **Sol** (`gpt-5.6-sol`), Builder on **Terra** (`gpt-5.6-terra`), Reviewer on **Luna** (`gpt-5.6-luna`): flagship judgment on top, bounded execution against a written brief one tier down, gate-backed review at the cheapest. Reasoning effort is the within-tier knob, top effort (`xhigh` / `max`, or Sol's `ultra`) held for irreversible steps.
-- **Porting notes, converged** — `PORTING-NOTES.md` §1 goes from "does not exist on Codex" to "converged in v2.1.0," keeping the history so no one re-opens it, plus the real caveat: a Sol parent runs its sub-agents as Sol unless multi-agent routing is enabled (Codex issue #31814).
-- **Claude build unchanged** — content changes are confined to `codex-skill/`; Opus / Sonnet / Haiku routing and the 1-hour prompt cache (§2, still Claude-Code-only) are untouched.
+- **Subagents carry rules inline, not the essay** — Bob and Richard get a compact **Token Rules** block in their own role file and stop loading the skill; the full essay stays the Architect's reference. **~578 tokens off each subagent's permanent floor**, saved every turn and every respawn. The inline block is deliberate point-of-use repetition (accuracy-safe per the prompt-repetition research) and also means a subagent with the skill uninstalled still has its discipline.
+- **Model routing stated once** — the Claude `ARCHITECT.md` stated the sonnet/haiku policy in three places; now **Model Allocation** is the single source, spin-ups just point to it. Removes a drift surface from the longest-lived agent's always-carried file.
+- **Claude-build only** — the Codex build was already lean here; its v2.1.0 Sol / Terra / Luna routing is untouched.
 
-**v2.0.0** made *context the cost* — per-role context budgets, model-tier routing, and the 1-hour prompt cache. **v1.9.0** made BUILD-LOG size a mechanical gate. **v1.8.0** made BUILD-LOG rotation a rule and moved the version check into an on-demand playbook. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
+**v2.1.0** converged model routing — the Codex build now routes Sol / Terra / Luna, the analog of Opus / Sonnet / Haiku. **v2.0.0** made *context the cost* — per-role context budgets, model-tier routing, and the 1-hour prompt cache. **v1.9.0** made BUILD-LOG size a mechanical gate. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
 
 See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 

@@ -116,22 +116,20 @@ Before the spin-up: run the Pre-Flight Check from `playbooks/PLANNING.md` — se
 one line each, written in your reply. A shaky answer means fix the plan, not soften the answer.
 
 Spin up Bob:
-> You are Bob on this project. Load token-optimizer skill first.
-> Then read BUILDER.md, then handoff/ARCHITECT-BRIEF.md.
+> You are Bob on this project. Read BUILDER.md, then handoff/ARCHITECT-BRIEF.md.
 > Your task is Step [N]. Confirm the brief is complete before writing any code.
 
-Run Bob on **`"sonnet"`** by default — pass `model: "sonnet"` in the Agent tool call. Building is bounded execution against a written brief, which Sonnet handles at near-Opus quality for roughly 40% of the cost on every axis (input, output, and cache writes). The version-stable aliases are `"opus"` (most capable), `"sonnet"` (balanced), `"haiku"` (fastest) — each always resolves to the newest model of its tier. Raise Bob to `"opus"` only for the floors in Model Allocation below. Never hardcode dated model IDs; they go stale.
+Run Bob on his default tier — pass `model: "sonnet"`. See **Model Allocation** below for the defaults, the floors, and when to raise a tier.
 
 ---
 
 ## Briefing Richard
 
 When Bob writes handoff/REVIEW-REQUEST.md and signals done:
-> You are Richard on this project. Load token-optimizer skill first.
-> Then read REVIEWER.md, then handoff/REVIEW-REQUEST.md, then only the files Bob listed.
+> You are Richard on this project. Read REVIEWER.md, then handoff/REVIEW-REQUEST.md, then only the files Bob listed.
 > Write findings to handoff/REVIEW-FEEDBACK.md.
 
-Run Richard on **`"haiku"`** by default — pass `model: "haiku"`. Review is a bounded, gate-backed judgment pass over a small listed diff; the Mechanical Gate has already caught what a machine can catch before Richard reads a line, so Haiku's speed and cost fit the job. Raise Richard to `"sonnet"` or `"opus"` for security-sensitive, auth, or architecturally load-bearing diffs. Same aliases as above.
+Run Richard on his default tier — pass `model: "haiku"`. See **Model Allocation** for when to raise it.
 
 ---
 
@@ -154,7 +152,7 @@ more in re-read tokens than the feature is worth. Bound it:
 
 ## Model Allocation
 
-Match the model to the step, not to habit. Defaults first, then the policy.
+Match the model to the step, not to habit. Defaults first, then the policy. Aliases are version-stable — `"opus"` (most capable), `"sonnet"` (balanced), `"haiku"` (fastest), each resolving to the newest model of its tier; never hardcode dated model IDs. Building is bounded execution against a written brief, which Sonnet handles at near-Opus quality for ~40% of the cost; review is a gate-backed pass over a small listed diff, which Haiku fits.
 
 | Role | Default | Raise a tier when |
 |---|---|---|

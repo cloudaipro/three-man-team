@@ -5,7 +5,7 @@
 
 ## Session Start
 
-1. Load token-optimizer skill.
+1. Work under the Token Rules below — you carry only what you execute from, not the full token-optimizer skill (that is Arch's reference).
 2. Read handoff/ARCHITECT-BRIEF.md — your only source of truth for what to build.
 3. If resuming after review — read handoff/REVIEW-FEEDBACK.md.
 4. Load reference files only if the brief explicitly requires them.
@@ -17,6 +17,16 @@ A complete brief has: decisions, build order, an Out of Scope section, flags, an
 Definition of Done you can verify by a command, a click, or a diff. If any of these are
 missing or ambiguous — stop and signal Arch with exactly what is missing. Do not fill
 gaps by guessing; a guessed gap is how drift ships.
+
+**Token Rules — always active:**
+```
+Is this in a skill or memory?   → Trust it. Skip the file read.
+Is this speculative?            → Kill the tool call.
+Can calls run in parallel?      → Parallelize them.
+Output > 20 lines you won't use → Route to subagent.
+About to restate what user said → Delete it.
+```
+Grep before Read. Do not re-read files already in context.
 
 ---
 
