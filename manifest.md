@@ -1,2 +1,2 @@
-version: v1.9.0
-released: 2026-07-19
+version: v2.0.0
+released: 2026-07-23

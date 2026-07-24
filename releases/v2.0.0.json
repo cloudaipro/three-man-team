@@ -1,0 +1,63 @@
+{
+  "version": "v2.0.0",
+  "released": "2026-07-23",
+  "from_version": "v1.9.0",
+  "arch_opening": "There is an update available — version 2.0.0. The theme is 'context is the cost'. Every token-optimization rule this framework shipped through v1.9 cut what a session *loads* — grep before read, role-scoped loading, a lean CLAUDE.md. Measured against a real multi-hour session that cost about $156 CAD, all file reads combined were roughly 0.1% of the bill. 94.6% went to re-processing context that was already assembled once and then re-sent, and re-billed, on every following turn — cache reads plus cold cache rewrites. This release optimizes the axis that actually holds the money: what each agent *carries*. It gives every role a context budget with checkpoint-and-respawn, routes execution roles to cheaper model tiers, and documents the one-hour prompt cache that keeps context warm across handoffs. Replayed against that real trace, the three together model out to a 71.6% reduction. I'll look at your files and walk you through exactly what applies.",
+  "changes": [
+    {
+      "id": "context-budget-role-files",
+      "type": "feature",
+      "title": "Every role gets a hard context budget with checkpoint-and-respawn",
+      "what_changed": "BUILDER.md, REVIEWER.md, and ARCHITECT.md each carry a new `## Context Budget` section. Builder caps at ~90K tokens, then checkpoints (where it stopped, what's next, which files matter, open decisions) and lets the Architect respawn a fresh Builder from that handoff instead of continuing the swollen context. Reviewer caps at ~60K and bounces oversized diffs. Architect scopes briefs to fit one budget, prefers sequential short-lived Builders over one long-lived Builder, and logs a one-line `Cost:` per BUILD-LOG step.",
+      "old_behavior": "No role had a context budget or an in-run reset point. A Builder subagent spawned once and ran the whole step, accumulating every bash result, file read, and diff permanently. On the measured project one general-purpose Builder ran 383 calls over six hours, context climbing from 21,011 to 347,455 tokens, never reset — 52% of the entire day's spend for 31,716 output tokens (83 per call). Cost grows with the square of session length, so SESSION-CHECKPOINT.md firing only between human sessions never touched the long agent runs where the tokens actually live.",
+      "new_behavior": "Context is bounded per role. When Builder crosses its cap it hands off and a fresh Builder resumes from a ~20K checkpoint instead of a 300K continuation. Replayed against the real trace, the expensive Builder drops from $58.87 to $8.96.",
+      "user_impact_plain": "The single largest cost in a real build is not what agents load, it is what they carry turn to turn. Bounding it is the difference between a methodology that gets more expensive the longer you use it and one that does not.",
+      "how_to_assess": "Read the user's role files (names from manifest.md). If BUILDER/REVIEWER/ARCHITECT have no Context Budget section, offer the v2.0.0 wording, preserving their team names and personas. Also skim their BUILD-LOG and any long-running subagents: a step that needed hundreds of calls was scoped too large — that is the pattern the budget prevents, not something to re-run retroactively.",
+      "user_decision": "Want me to add the Context Budget sections to your three role files? It changes how steps are scoped going forward; existing work is untouched."
+    },
+    {
+      "id": "model-tier-routing",
+      "type": "improvement",
+      "title": "Builder defaults to Sonnet, Reviewer to Haiku, Architect stays Opus",
+      "what_changed": "ARCHITECT.md spin-up instructions now pass `model: \"sonnet\"` for the Builder and `model: \"haiku\"` for the Reviewer by default, and the Model Allocation section leads with a defaults table plus named raise-a-tier floors (irreversible steps raise Builder to Opus; security-sensitive or architecturally load-bearing diffs raise Reviewer).",
+      "old_behavior": "The framework told the Architect it *could* pass a model but defaulted to inheriting the session model — Opus for everyone. On the measured project every subagent ran Opus doing mechanical work: 239 Bash, 69 Read, 38 Edit. Subagents were 60% of spend ($68.66 of $114.27).",
+      "new_behavior": "Judgment stays on Opus; bounded execution against a written brief runs on Sonnet (~40% cheaper on every axis), and gate-backed review over a small listed diff runs on Haiku. The Mechanical Gate is the safety net that makes the cheaper Builder safe.",
+      "user_impact_plain": "The Architect makes the decisions that are expensive to get wrong; Builder and Reviewer execute against a spec, which is exactly the bounded work the cheaper tiers now handle at near-Opus quality.",
+      "how_to_assess": "Read the Architect role file's spin-up and Model Allocation sections. If the Builder/Reviewer spin-ups don't set a model, offer the v2.0.0 defaults. Respect any existing project-specific allocation the Architect has already tuned.",
+      "user_decision": "Want me to set the model defaults in your Architect file? Floors keep irreversible and security-sensitive steps on the higher tier."
+    },
+    {
+      "id": "token-optimization-reframed",
+      "type": "improvement",
+      "title": "token-optimization.md reframed onto the axis that holds the cost",
+      "what_changed": "docs/token-optimization.md gains a 'Bigger Lever: What You Carry, Not What You Load' section (with the measured 94.6% / 5.3% / 0.1% split), a Cache TTL section, and a Model Routing section. The existing input-loading rules stay — they are correct and cheap — but are no longer presented as the whole story.",
+      "old_behavior": "The doc was entirely about input reduction (grep before read, role-scoped loading, CLAUDE.md under 50 lines). Every rule optimized loading; none addressed the re-processed context that was 94.6% of a real bill.",
+      "new_behavior": "The doc names the three levers that move the majority of the cost — bound context, keep the cache warm, route to cheaper tiers — and keeps the loading rules as the last, smallest term.",
+      "user_impact_plain": "Reducing what you load saves once. Reducing what you carry saves that amount multiplied by every remaining turn in the session.",
+      "how_to_assess": "This is a docs change in the framework repo; nothing to install in a project. Point the user at it if they want the reasoning behind the role-file changes.",
+      "user_decision": "Nothing to decide — reference material for the changes above."
+    },
+    {
+      "id": "one-hour-prompt-cache",
+      "type": "improvement",
+      "title": "One-hour prompt cache documented as the cheapest setup win",
+      "what_changed": "INSTALL.md and docs/token-optimization.md now recommend `ENABLE_PROMPT_CACHING_1H=1` in settings.json, with the economics: TMT's loop runs on handoff gaps in the 5-to-60-minute band, exactly where the default 5-minute cache expires and re-bills the whole context at write price on the next call.",
+      "old_behavior": "Nothing in the framework mentioned the cache TTL. On the measured session, 18 cold rewrites — each re-uploading 140K to 330K tokens because the 5-minute cache had lapsed during review — cost $25 of the $114 day for zero new information.",
+      "new_behavior": "New installs are told to switch on the 1-hour TTL. It is not a universal win — for continuous sub-5-minute traffic it overpays — but for TMT's gap-heavy loop it is pure profit.",
+      "user_impact_plain": "One environment variable removes the single most wasteful line item in a handoff-driven workflow. Turn it off if you switch to continuous single-session coding.",
+      "how_to_assess": "Check whether the user's ~/.claude/settings.json has an env block with ENABLE_PROMPT_CACHING_1H. If not, offer to add it. Explain it is a bet that pays off for bursty/handoff usage and can cost more for continuous traffic.",
+      "user_decision": "Want me to turn on the 1-hour prompt cache in your settings? It is the cheapest win, but it is workload-shape-dependent — I'll explain the tradeoff first."
+    },
+    {
+      "id": "role-files-land-together",
+      "type": "fix",
+      "title": "Builder and Architect changes must land together",
+      "what_changed": "The Builder's Context Budget tells it to checkpoint and let the Architect respawn a fresh Builder from the handoff. The Architect's Context Budget and Model Allocation are the receiving half — the respawn behavior and the sequential-Builders policy.",
+      "old_behavior": "Not applicable — new coupling introduced by this release.",
+      "new_behavior": "Updating BUILDER.md without the matching ARCHITECT.md leaves the handoff instruction with no receiver: Bob checkpoints and stops, but nothing respawns him. This is why the release is marked critical — adopt the two role files together.",
+      "user_impact_plain": "If you apply the Builder budget but not the Architect one, builds stall at the first checkpoint. Apply both, or neither.",
+      "how_to_assess": "When offering the Context Budget edits, offer BUILDER and ARCHITECT as a pair. If the user only wants one, explain the stall and recommend both.",
+      "user_decision": "Adopt the Builder and Architect Context Budget sections together — I'll apply both in one pass."
+    }
+  ]
+}

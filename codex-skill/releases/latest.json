@@ -1,6 +1,12 @@
 {
-  "latest": "v1.9.0",
+  "latest": "v2.0.0",
   "versions": [
+    {
+      "version": "v2.0.0",
+      "released": "2026-07-23",
+      "critical": true,
+      "reason": "Role files now bound context (Builder checkpoints and hands off; Architect respawns a fresh Builder and holds the model-allocation policy) — updating BUILDER without the matching ARCHITECT leaves the handoff instruction with no receiver. The two must land together"
+    },
     {
       "version": "v1.9.0",
       "released": "2026-07-19",

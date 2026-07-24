@@ -61,6 +61,20 @@ wiring interactively. Stock installs can add `--replace-role-files` for a one-sh
 
 ---
 
+## Recommended: Turn On the 1-Hour Prompt Cache
+
+Three Man Team runs on handoffs — Architect briefs, you review, Builder waits, Reviewer reads.
+Claude Code's default 5-minute cache TTL expires in those gaps and re-bills the whole context at
+write price on the next call. Switch to the 1-hour TTL once, in `~/.claude/settings.json`:
+
+```json
+{ "env": { "ENABLE_PROMPT_CACHING_1H": "1" } }
+```
+
+This is the single cheapest cost win for this methodology. See [docs/token-optimization.md](docs/token-optimization.md).
+
+---
+
 ## Requirements
 
 - Claude Code CLI — install at https://claude.ai/code

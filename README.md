@@ -12,16 +12,16 @@
 
 ---
 
-## What's New — v1.7.0
+## What's New — v2.0.0
 
-**Machines check what machines can check.** Every project gets a `RULES.md` quality contract:
+**Context is the cost.** Every token rule the framework shipped through v1.9 cut what a session *loads*. Measured against a real multi-hour session that cost ~$156 CAD, all file reads combined were about **0.1%** of the bill — while **94.6%** went to re-processing context that was assembled once and then re-sent, and re-billed, on every following turn. One Builder subagent ran 383 calls over six hours, context climbing 21K → 347K tokens, never reset — **52% of the entire day**. This release optimizes what agents *carry*, not what they load.
 
-- **Mechanical Gate** — the project's own runnable checks (lint, tests, build). The Builder runs them before every review request; the Reviewer refuses to review over a missing or failing gate. Review attention goes only to what no command can verify.
-- **Standing Rules** — project rules the Reviewer checks every step, each with its source and an advisory/blocking status. New rules observe first, block only after proving themselves.
-- **Lessons graduate** — the second time the same Lesson lands in BUILD-LOG, it becomes a Standing Rule. The third repetition should be impossible.
-- **Model allocation with floors** — cheaper models where the gate proves it's safe; never on irreversible work. Cheapest at the same quality, never cheapest at any quality.
+- **Context budgets** — every role caps its context and resets. Builder checkpoints at ~90K and the Architect respawns a fresh Builder from the handoff instead of continuing a 300K context. Replayed on the real trace, the expensive Builder drops from **$58.87 to $8.96**.
+- **Model-tier routing** — Architect stays on Opus for judgment; Builder runs on Sonnet and Reviewer on Haiku by default, with floors that raise the tier for irreversible or security-sensitive steps.
+- **Keep the cache warm** — one line, `ENABLE_PROMPT_CACHING_1H=1`, stops handoff gaps from re-billing the whole context. On the measured session that waste alone was **$25**.
+- **The doc, reframed** — `token-optimization.md` now leads with the axis that holds the cost: what you carry, not what you load. Modelled together, the three changes cut the measured workload **71.6%**.
 
-**v1.6.0** added the Codex skill (`codex-skill/`). **v1.5.0** added slash commands — start every session with `/architect`. **v1.4.0** added `playbooks/` — the Architect's planning discipline as on-demand files.
+**v1.9.0** made BUILD-LOG size a mechanical gate. **v1.8.0** made BUILD-LOG rotation a rule and moved the version check into an on-demand playbook. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
 
 See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 
@@ -225,9 +225,15 @@ Update your clone, then run the upgrade tool against your project. The first arg
 picks the CLI your install runs under — `claude` (the default) or `codex`:
 
 ```bash
-git -C ~/.claude/skills/three-man-team pull
-~/.claude/skills/three-man-team/upgrade claude /path/to/your/project
+cd ~/.claude/skills/three-man-team
+git pull --ff-only origin main
+./upgrade /path/to/your/project
 ```
+
+`--ff-only` is deliberate: the clone is meant to track this repo untouched, so a pull that
+cannot fast-forward means something edited it locally. Better to stop and look than to
+merge. If it refuses, `git status` and `git log --oneline origin/main..HEAD` show what
+diverged.
 
 (Per-project installs: the clone lives at `.claude/skills/three-man-team` inside the
 project. `./upgrade /path/to/your/project` without the CLI argument means `claude`.)

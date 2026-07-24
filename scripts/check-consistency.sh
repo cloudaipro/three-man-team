@@ -138,6 +138,17 @@ else
   ok "CHANGELOG.md leads with $LATEST_V"
 fi
 
+# The README's "What's New" heading is the first thing a visitor reads. It sat at
+# v1.7.0 while v1.9.0 was tagged, because nothing checked it.
+README_V="$(sed -n 's/^## What.s New — *\(v[0-9.]*\).*/\1/p' README.md | head -1)"
+if [ -z "$README_V" ]; then
+  problem "README.md has no '## What's New — vX.Y.Z' heading to check"
+elif [ "$README_V" != "$LATEST_V" ]; then
+  problem "README.md What's New says $README_V but the registry latest is $LATEST_V — the landing page advertises a stale release"
+else
+  ok "README.md What's New matches $LATEST_V"
+fi
+
 echo ""
 echo "— Template-set parity (project-folder ↔ generic)"
 

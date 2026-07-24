@@ -106,7 +106,7 @@ Spin up Builder:
 > Then read BUILDER.md, then handoff/ARCHITECT-BRIEF.md.
 > Your task is Step [N]. Confirm the brief is complete before writing any code.
 
-To run Builder on a specific model, pass `model` in the Agent tool call, or switch to that model before pasting manually. Use the version-stable aliases `"opus"` (most capable), `"sonnet"` (balanced), `"haiku"` (fastest) — each always resolves to the newest model of its tier. Omit `model` to inherit the session's model. Do not hardcode dated model IDs; they go stale.
+Run Builder on **`"sonnet"`** by default — pass `model: "sonnet"` in the Agent tool call. Building is bounded execution against a written brief, which Sonnet handles at near-Opus quality for roughly 40% of the cost on every axis (input, output, and cache writes). The version-stable aliases are `"opus"` (most capable), `"sonnet"` (balanced), `"haiku"` (fastest) — each always resolves to the newest model of its tier. Raise Builder to `"opus"` only for the floors in Model Allocation below. Never hardcode dated model IDs; they go stale.
 
 ---
 
@@ -117,24 +117,45 @@ When Builder writes handoff/REVIEW-REQUEST.md and signals done:
 > Then read REVIEWER.md, then handoff/REVIEW-REQUEST.md, then only the files Builder listed.
 > Write findings to handoff/REVIEW-FEEDBACK.md.
 
-To run Reviewer on a specific model, pass `model` in the Agent tool call — same aliases as above — or switch to that model before pasting manually.
+Run Reviewer on **`"haiku"`** by default — pass `model: "haiku"`. Review is a bounded, gate-backed judgment pass over a small listed diff; the Mechanical Gate has already caught what a machine can catch before Reviewer reads a line, so Haiku's speed and cost fit the job. Raise Reviewer to `"sonnet"` or `"opus"` for security-sensitive, auth, or architecturally load-bearing diffs. Same aliases as above.
+
+---
+
+## Context Budget
+
+A long-lived Builder is the most expensive thing this team can do. Context accumulates every
+turn and is re-billed every turn, so cost grows with the square of session length — a six-hour
+Builder can cost more in re-read tokens than the feature is worth. Bound it:
+
+- **Scope briefs to fit one budget.** A step should be completable by Builder inside ~90K tokens
+  of context. A step needing dozens of files or a long exploratory build is two steps, not one.
+- **Prefer sequential short-lived Builders over one long-lived Builder.** Same work, bounded
+  context each. When Builder checkpoints at its cap, respawn a fresh Builder from the handoff —
+  never continue the swollen context.
+- **Log cost per step.** Add a one-line `Cost:` to each BUILD-LOG step entry — calls, peak
+  context, and USD if you have it. A step that crossed the budget is the signal the brief was
+  too large; fix the sizing, the same way the 200-line rotation gate fixes log growth.
 
 ---
 
 ## Model Allocation
 
-Match the model to the step, not to habit. The mechanics are above; the policy is here:
+Match the model to the step, not to habit. Defaults first, then the policy.
 
-- **Floors — never below.** Any step flagged "no undo" (a migration, a deletion, an
-  external side effect) and anything that locks a one-way door — schema shape, public
-  API — runs at the session default or higher. Savings on irreversible work are not savings.
-- **Where to run cheaper.** Routine steps whose Definition of Done is fully covered by the
-  Mechanical Gate are the safe place to try one tier down — the gate catches what a cheaper
-  model gets wrong before the Reviewer ever sees it.
-- **Evidence over instinct.** A bounced step at a lower tier → that kind of work goes back
-  up a tier, and the bounce gets a Lesson. Several consecutive clean steps → try the next
-  low-risk, gate-covered step one tier lower. Cheapest at the same quality — never cheapest
-  at any quality.
+| Role | Default | Raise a tier when |
+|---|---|---|
+| Architect (you) | `opus` | never lower — orchestration judgment is expensive to get wrong |
+| Builder | `sonnet` | the step locks a one-way door (schema, public API) or the gate can't fully verify the Definition of Done |
+| Reviewer | `haiku` | the diff is security-sensitive, touches auth, or is architecturally load-bearing |
+
+- **Floors — never below.** Any step flagged "no undo" (a migration, a deletion, an external
+  side effect) runs Builder at `opus`, not `sonnet`. Savings on irreversible work are not savings.
+- **The gate is the safety net.** Builder defaults to `sonnet` because the Mechanical Gate catches
+  what a cheaper model gets wrong before Reviewer ever sees it. A step with no runnable gate is a
+  step to raise Builder a tier, not lower it.
+- **Evidence over instinct.** A step bounced at its default tier → that kind of work goes up a
+  tier, and the bounce gets a Lesson. Consecutive clean steps at a raised tier → drop back to the
+  default. Cheapest at the same quality — never cheapest at any quality.
 
 ---
 

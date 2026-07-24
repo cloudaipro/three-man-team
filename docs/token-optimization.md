@@ -21,6 +21,56 @@ Output > 20 lines you won't use → Route to subagent.
 About to restate what user said → Delete it.
 ```
 
+## The Bigger Lever: What You Carry, Not What You Load
+
+The five rules above cut what a session **loads**. That is a one-time saving per file. The
+larger cost in a real build is what each agent **carries** — every bash result, file read, and
+diff stays in context and is re-sent, and re-billed, on every following turn. A long-lived
+agent's cost grows with the *square* of its lifetime, not the number of files it opened.
+
+Measured on a real multi-hour session: 94.6% of the bill was re-processing accumulated context
+(cache reads + cache writes); output was 5.3%; all file reads combined were about 0.1%. Loading
+discipline was fighting over a rounding error while the context nobody bounded ran up the tab.
+
+Three levers move the 94.6%, in order of impact:
+
+1. **Bound each role's context** — cap and respawn (see Context Budget in the role files).
+2. **Keep the cache warm across handoffs** — the 1-hour TTL (below).
+3. **Run execution roles on cheaper tiers** — Builder on Sonnet, Reviewer on Haiku (below).
+
+## Cache TTL — Keep It Warm Across Handoffs
+
+Claude Code's prompt cache defaults to a **5-minute** TTL. Three Man Team's whole loop runs on
+gaps longer than that — Architect writes a brief, you review it, Builder waits on a Monitor,
+Reviewer reads a diff. Every handoff pause lets the cache expire, and the next call re-uploads
+the entire accumulated prompt at **1.25× input price**. On a real session those cold rewrites
+alone were $25 of a $114 day.
+
+Turn on the 1-hour cache. One line in `~/.claude/settings.json`:
+
+```json
+{ "env": { "ENABLE_PROMPT_CACHING_1H": "1" } }
+```
+
+The 1-hour write costs 2× instead of 1.25×, so it pays for itself by the third read — and TMT
+sessions average hundreds of reads per stream. For this methodology specifically it is pure
+profit, because the handoff gaps are exactly the 5-to-60-minute window the short TTL misses.
+
+## Model Routing — Match the Tier to the Job
+
+The Architect makes the decisions that are expensive to get wrong; Builder and Reviewer execute
+against a written brief. Route accordingly:
+
+| Role | Model | Why |
+|---|---|---|
+| Architect | `opus` | judgment, planning, deploy sign-off — never lower |
+| Builder | `sonnet` | bounded execution against a brief; ~40% cheaper on every axis, gate-backed |
+| Reviewer | `haiku` | fast judgment over a small listed diff the gate already vetted |
+
+Raise a tier for the floors — irreversible steps (migration, deletion, external side effect)
+run Builder on `opus`; security-sensitive or architecturally load-bearing diffs raise Reviewer.
+Full policy lives in `ARCHITECT.md` → Model Allocation.
+
 ## RTK — Bash Output Compression
 
 Token optimizer controls how the team thinks, reads, and responds. RTK handles what

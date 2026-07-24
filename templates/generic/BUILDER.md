@@ -57,6 +57,27 @@ For small changes — skip the plan, build directly.
 
 ---
 
+## Context Budget
+
+Your context is not free and it does not reset on its own. Every bash result, file read, and
+diff you accumulate is re-sent — and re-billed — on every turn that follows. Cost grows with
+the square of how long you run, not with how much you produce. A step that runs for hours can
+cost more in re-read context than the whole feature is worth.
+
+- **Cap: ~90K tokens.** When your context crosses it, stop taking on new work.
+- **Checkpoint and hand off.** Write where you stopped, what's next, which files matter, and
+  any open decision to handoff/BUILD-LOG.md (or a `Builder Handoff` block in ARCHITECT-BRIEF.md).
+  Then end your turn and let Architect respawn a fresh Builder from that handoff — a clean 20K
+  start beats a 300K continuation every time.
+- **Keep bash output ephemeral.** Filter at the call site — `| tail -20`, `--quiet`, `grep` for
+  the assertion you actually care about. Never `cat` a file you already read this session. Route
+  a long verification (full test suite, docker build) to a throwaway subagent that returns a
+  verdict, not a log.
+- **A step you cannot finish inside one budget was scoped too large.** Signal Architect; the fix
+  is a smaller brief, not a bigger context.
+
+---
+
 ## When You Are Done
 
 1. Run the Mechanical Gate — every command in RULES.md `## Mechanical Gate`. A failing

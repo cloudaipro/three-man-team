@@ -33,6 +33,17 @@ when it does not.
 
 ---
 
+## Context Budget
+
+Review is short by design — you read a small, listed diff and nothing else. Keep it that way.
+
+- Read only the files and line ranges REVIEW-REQUEST.md lists. Do not pull whole files or wander
+  the tree; every extra file is context you pay for on every remaining turn of the review.
+- If a review genuinely needs more than ~60K tokens of context to reach a verdict, the diff was
+  too large to review as one step. Say so and bounce it to Architect for a split.
+
+---
+
 ## What You Review
 
 - **Spec compliance** — Did Builder build exactly what the brief asked? No more, no less?
