@@ -185,6 +185,11 @@ done <<< "$PARITY_FILES"
 # Role-neutral files must be byte-identical everywhere they ship
 IDENTICAL_SETS="RULES.md:templates/project-folder/RULES.md templates/generic/RULES.md codex-skill/templates/project/RULES.md
 check-handoff.sh:templates/project-folder/scripts/check-handoff.sh templates/generic/scripts/check-handoff.sh codex-skill/templates/project/scripts/check-handoff.sh
+ARCHITECT-BRIEF.md:templates/project-folder/handoff/ARCHITECT-BRIEF.md templates/generic/handoff/ARCHITECT-BRIEF.md codex-skill/templates/project/handoff/ARCHITECT-BRIEF.md
+BUILD-LOG.md:templates/project-folder/handoff/BUILD-LOG.md templates/generic/handoff/BUILD-LOG.md codex-skill/templates/project/handoff/BUILD-LOG.md
+REVIEW-REQUEST.md:templates/project-folder/handoff/REVIEW-REQUEST.md templates/generic/handoff/REVIEW-REQUEST.md codex-skill/templates/project/handoff/REVIEW-REQUEST.md
+REVIEW-FEEDBACK.md:templates/project-folder/handoff/REVIEW-FEEDBACK.md templates/generic/handoff/REVIEW-FEEDBACK.md codex-skill/templates/project/handoff/REVIEW-FEEDBACK.md
+SESSION-CHECKPOINT.md:templates/project-folder/handoff/SESSION-CHECKPOINT.md templates/generic/handoff/SESSION-CHECKPOINT.md codex-skill/templates/project/handoff/SESSION-CHECKPOINT.md
 token-optimization.md:docs/token-optimization.md templates/project-folder/.claude/skills/token-optimization.md codex-skill/references/token-optimization.md
 PLANNING.md:templates/project-folder/playbooks/PLANNING.md templates/generic/playbooks/PLANNING.md codex-skill/references/playbooks/PLANNING.md
 DIAGNOSIS.md:templates/project-folder/playbooks/DIAGNOSIS.md templates/generic/playbooks/DIAGNOSIS.md codex-skill/references/playbooks/DIAGNOSIS.md
@@ -253,6 +258,32 @@ for f in templates/project-folder/scripts/check-handoff.sh \
   fi
 done
 [ "$EXEC_OK" = 1 ] && ok "shipped handoff-check scripts are executable"
+
+# The Codex scaffolder must install every project file that another installed file
+# references by name. v1.9.0 fixed this once — setup-project.sh scaffolded RULES.md
+# and the handoff set but never manifest.md, so the version check reported "unknown"
+# on every Codex install. v2.3.0 reproduced it exactly: RULES.md's gate row calls
+# scripts/check-handoff.sh, and the scaffolder did not install the script. Second
+# occurrence of one lesson, so by the framework's own rule it becomes a check.
+CODEX_SETUP="codex-skill/scripts/setup-project.sh"
+SCAFFOLD_OK=1
+for needle in "project/scripts/check-handoff.sh" "project/handoff/" "project/manifest.md" "project/RULES.md"; do
+  if ! grep -q "$needle" "$CODEX_SETUP"; then
+    problem "$CODEX_SETUP never installs $needle — a Codex project would carry files that reference it without having it"
+    SCAFFOLD_OK=0
+  fi
+done
+[ "$SCAFFOLD_OK" = 1 ] && ok "Codex scaffolder installs every file its other files reference"
+
+# The Codex bundle must carry the handoff templates the scaffolder copies from
+CODEX_HANDOFF_OK=1
+for hf in ARCHITECT-BRIEF.md BUILD-LOG.md REVIEW-REQUEST.md REVIEW-FEEDBACK.md SESSION-CHECKPOINT.md; do
+  if [ ! -f "codex-skill/templates/project/handoff/$hf" ]; then
+    problem "codex-skill/templates/project/handoff/$hf is missing — Codex installs fall back to a bare stub the handoff check cannot validate"
+    CODEX_HANDOFF_OK=0
+  fi
+done
+[ "$CODEX_HANDOFF_OK" = 1 ] && ok "Codex bundle carries the full handoff template set"
 
 echo ""
 if [ "$FAIL" = 1 ]; then
