@@ -1,0 +1,30 @@
+{
+  "version": "v2.3.1",
+  "released": "2026-07-26",
+  "from_version": "v2.3.0",
+  "arch_opening": "There is a patch available — version 2.3.1. It fixes one thing, and if you are on the Codex build it is almost certainly affecting you right now. v2.3.0 added a `scripts/check-handoff.sh` row to RULES.md's Mechanical Gate, but the Codex setup script never installed the script itself — so the gate command fails on every step, and a failing gate blocks every review request. If your Builder has been reporting a failing gate it cannot explain since the last update, this is why. The Claude build was unaffected; its upgrade tool always shipped the script. I'll check which build you're on and what your project actually has.",
+  "changes": [
+    {
+      "id": "codex-scaffolder-installs-check-handoff",
+      "type": "bug",
+      "title": "Codex installs got a gate command without the script it calls",
+      "what_changed": "`codex-skill/scripts/setup-project.sh` now installs `scripts/check-handoff.sh` into the project, always refreshed rather than skipped-if-present, and copies the structured handoff templates instead of writing two-line stubs. The Codex bundle gained `templates/project/handoff/`, byte-identical to the Claude set.",
+      "old_behavior": "The scaffolder installed RULES.md — which carries a Mechanical Gate row calling `scripts/check-handoff.sh` — but never installed the script. Every Codex project set up or upgraded on v2.3.0 has a gate command that fails on every step. Because a failing gate is an Iron Rule bounce, no review request can pass until it is fixed. The handoff files were also bare two-line stubs, so even with the script present a brief had no sections for it to check.",
+      "new_behavior": "A fresh or upgraded Codex project gets the script alongside the gate row that calls it, plus handoff templates with the sections the check looks for. The gate passes; the brief check correctly fails while a brief is unfilled and passes once it is written.",
+      "user_impact_plain": "If you are on Codex and your Mechanical Gate started failing after v2.3.0 for a reason nobody could find in your code, this is the reason and this is the fix. Nothing about your project was wrong.",
+      "how_to_assess": "Check whether `scripts/check-handoff.sh` exists in the project root. If RULES.md's Mechanical Gate has a `scripts/check-handoff.sh` row and the file is not there, the project is in the broken state. Re-running the skill's `setup-project.sh` against the project installs it without touching anything else — it is additive except for this one framework-owned script, which it refreshes deliberately. Also check `handoff/ARCHITECT-BRIEF.md`: if it is a two-line stub rather than a template with Decisions / Out of Scope / Flags / Definition of Done, offer to install the structured template, but only if the file is not already carrying a real brief.",
+      "user_decision": "Want me to install the missing handoff-check script and, if your handoff files are still bare stubs, the structured templates? Nothing you have written gets overwritten."
+    },
+    {
+      "id": "scaffolder-completeness-assertion",
+      "type": "improvement",
+      "title": "The scaffolder gap is now a mechanical check, not a lesson",
+      "what_changed": "`scripts/check-consistency.sh` asserts that `setup-project.sh` installs every project file its other installed files reference by name, that the Codex bundle carries the full handoff template set, and that the handoff templates and `check-handoff.sh` are byte-identical across all three template forks.",
+      "old_behavior": "Nothing checked that the Codex scaffolder kept up with what the framework files reference. v1.9.0 fixed this exact shape once — the scaffolder installed RULES.md and the handoff set but never manifest.md, so the version check reported 'unknown' on every Codex install. v2.3.0 reproduced it with a different file.",
+      "new_behavior": "The same lesson landing twice becomes a standing check rather than a third manual fix — the framework's own rule about promoting a repeated Lesson to a Rule, applied to its own release machinery. Both assertions were negative-tested.",
+      "user_impact_plain": "Nothing to do. This is the framework applying its own discipline to itself so this class of bug cannot ship a third time.",
+      "how_to_assess": "Nothing to assess in the user's project — this is a repo-side check on the framework's release machinery.",
+      "user_decision": "No action needed. Mentioned only so you know why this will not recur."
+    }
+  ]
+}
