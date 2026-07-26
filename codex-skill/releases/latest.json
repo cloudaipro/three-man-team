@@ -1,6 +1,12 @@
 {
-  "latest": "v2.3.0",
+  "latest": "v2.3.1",
   "versions": [
+    {
+      "version": "v2.3.1",
+      "released": "2026-07-26",
+      "critical": true,
+      "reason": "v2.3.0 added a `scripts/check-handoff.sh` row to RULES.md's Mechanical Gate, but the Codex scaffolder never installed the script — every Codex project set up on v2.3.0 carries a gate command that fails on every step, and a failing gate blocks every review request. Codex installs cannot self-heal: their manifest matches the v2.3.0 registry, so the version check stays silent. This release is how the fix reaches them"
+    },
     {
       "version": "v2.3.0",
       "released": "2026-07-26",

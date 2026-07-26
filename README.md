@@ -12,7 +12,15 @@
 
 ---
 
-## What's New — v2.3.0
+## What's New — v2.3.1
+
+**The installer was behind the instructions.** v2.3.0 added a `scripts/check-handoff.sh` row to `RULES.md`'s Mechanical Gate, but the Codex scaffolder never installed the script — so every Codex project set up on v2.3.0 carries a gate command that fails on every step, and a failing gate blocks every review request. The Claude build was unaffected. **If you are on Codex, this patch is the fix**, and your install cannot find it on its own: a project stamped `v2.3.0` matches the old registry, so the version check stays silent.
+
+The same bug shape as v1.9.0's `manifest.md` gap — the scaffolder installing the file that references a thing without installing the thing. Per the framework's own rule that a lesson landing twice becomes a standing check, `check-consistency.sh` now asserts the scaffolder installs every project file its other files reference.
+
+---
+
+## v2.3.0 — an accuracy bug is a token bug
 
 **An accuracy bug is a token bug.** Anthropic's [new rules of context engineering](https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models) (2026-07-24) removed over 80% of Claude Code's system prompt with no measurable eval loss, naming overconstraint and *conflicting instructions across layers* as the cause of the bloat. Combined with v2.0.0's finding that 94.6% of a real session's bill was re-processing accumulated context, the conclusion is that trimming a role file is a rounding error — the prelude caches — while a **bounced step** re-runs the whole loop and re-bills every agent's context. So this release spends its effort on making handoffs mechanically checkable and deleting instructions that conflict.
 

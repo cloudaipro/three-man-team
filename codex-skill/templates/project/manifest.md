@@ -1,6 +1,6 @@
 # Three Man Team — Manifest
 
-version: v2.3.0
+version: v2.3.1
 installed: [today's date]
 
 ## Team
