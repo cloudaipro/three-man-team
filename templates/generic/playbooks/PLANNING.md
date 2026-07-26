@@ -134,6 +134,11 @@ A mental checklist is a skipped checklist.
    this step ("nothing user-visible" is an acceptable answer). Anything on the list that is
    not specced goes to the Project Owner before the build, not after.
 
+Then run `scripts/check-handoff.sh brief` as the eighth and last line. The seven above are
+judgment; this one is mechanical, and it is the cheapest of the eight — it catches a missing
+Out of Scope section or a Definition of Done nobody can run *before* the Builder spends a
+context window discovering the same thing.
+
 A shaky answer means fix the plan — not soften the answer. Before finalizing, read
 BUILD-LOG `## Lessons`: that list is this project's accumulated scar tissue. Do not repeat
 an entry that is already on it.

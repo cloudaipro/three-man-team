@@ -56,10 +56,25 @@ technically correct but wrong for the project, shipping without anyone noticing.
 ## Token Discipline as Infrastructure
 
 Token waste is not a Claude problem or a prompt problem. It is a context architecture
-problem. The five rules in Three Man Team's CLAUDE.md are not guidelines — they are operating rules that fire before every tool call. The cost of re-reading a file you already have in context is paid every time. The cost of the rules is paid once, at session start.
+problem — and the architecture that matters is what each agent *carries*, not what it loads.
+Context accumulates and is re-sent on every following turn, so an agent's cost grows with the
+square of how long it runs. Measured on a real multi-hour session: 94.6% of the bill was
+re-processing accumulated context; every file read combined was 0.1%.
 
-Grep before Read. Never speculate. Parallelize when possible. Route large outputs to
-subagents. Never restate what the user said.
+So the framework bounds the carry. Each role runs under a context cap and checkpoints into a
+handoff file rather than continuing a swollen context. The 1-hour prompt cache keeps the
+handoff gaps warm. Model tiers match the job. And because a **bounced step** re-runs the whole
+loop — re-billing every agent's accumulated context — the Mechanical Gate and
+`scripts/check-handoff.sh` are token infrastructure as much as quality infrastructure.
+
+Earlier versions of this framework shipped a five-rule block that every role recited at session
+start. It is gone. Current models already parallelize calls, skip speculative reads, and avoid
+restating the prompt; rules for those cost tokens every session and change nothing. What
+remains is written as reasons rather than commands, because a rule the model can already infer
+is pure carry, and a rule that contradicts another file is worse than no rule at all.
+
+Anything a subagent must know cannot live in auto-memory — subagents do not inherit it.
+Cross-agent state belongs in the handoff files. That is why they are the record.
 
 ---
 

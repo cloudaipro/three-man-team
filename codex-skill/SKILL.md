@@ -29,19 +29,20 @@ Tiers mirror the Claude build's Opus / Sonnet / Haiku routing: judgment on the t
 
 Do not ask the user to summarize the project. Read the files.
 
-## Token Rules — Always Active
+## What Costs Money Here
 
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
+Context you accumulate is re-billed on every following turn. Cost grows with the square of how
+long an agent runs — not with how many files it opened. The single most expensive event is a
+**bounced step**: it re-runs the Reviewer, the Builder fix, and the Architect re-brief,
+re-billing every agent's accumulated context across the whole loop.
 
-Grep before Read. Never read a whole file to find one thing.
-Do not re-read files already in context this session.
-Never skip planning, writing, or reviewing code to save tokens.
+Read what changes a decision. Grep before Read, and use offset/limit rather than pulling a
+whole file to find one thing. Bound how long you run; checkpoint and respawn rather than
+continuing a swollen context.
+
+Skills and memories are pointers, not proof — verify `file:line` before acting on one.
+Never skip planning, writing, or reviewing code to save tokens: the bounce costs more.
+Full reasoning: `references/token-optimization.md`.
 
 ---
 

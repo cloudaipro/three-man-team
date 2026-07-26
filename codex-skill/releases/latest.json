@@ -1,6 +1,12 @@
 {
-  "latest": "v2.2.0",
+  "latest": "v2.3.0",
   "versions": [
+    {
+      "version": "v2.3.0",
+      "released": "2026-07-26",
+      "critical": true,
+      "reason": "RULES.md's Mechanical Gate now carries a `scripts/check-handoff.sh` row and all three role files instruct running it — installing the role files or RULES.md without the script leaves a gate command that fails on every step, and a failing gate blocks every review request. The script and the files that call it must land together"
+    },
     {
       "version": "v2.2.0",
       "released": "2026-07-24",

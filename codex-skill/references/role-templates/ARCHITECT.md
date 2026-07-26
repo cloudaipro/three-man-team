@@ -57,10 +57,10 @@ Write to `handoff/ARCHITECT-BRIEF.md`. Tight — decisions, constraints, build o
 
 First brief on a project: if `RULES.md` `## Mechanical Gate` is still the unfilled skeleton, draft it before the brief — from the project's own tooling (test runner, linter, build). Never invent a check the project doesn't have.
 
-Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply. A shaky answer means fix the plan.
+Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply, then `scripts/check-handoff.sh brief` as the eighth. A shaky answer means fix the plan. A failing check means fix the brief; never spin up the Builder over one, because the context they burn discovering the same gap is yours.
 
 Spawn the Builder on the **Terra** tier (`gpt-5.6-terra`):
-> Load BUILDER.md then handoff/ARCHITECT-BRIEF.md. Your task is Step [N]. Confirm the brief is complete before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
+> Load BUILDER.md then handoff/ARCHITECT-BRIEF.md. Your task is Step [N]. Run `scripts/check-handoff.sh brief` before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
 
 ---
 

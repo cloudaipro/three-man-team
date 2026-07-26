@@ -6,13 +6,15 @@
 ## Session Start
 
 1. Read `handoff/ARCHITECT-BRIEF.md` — your only source of truth for what to build.
-2. If resuming after review — read `handoff/REVIEW-FEEDBACK.md`.
-3. Load reference files only if the brief explicitly requires them.
+2. Run `scripts/check-handoff.sh brief`. It fails → the brief is not buildable yet. Stop and signal the Architect with the failing lines. Do not fill gaps by guessing; a guessed gap is how drift ships.
+3. If resuming after review — read `handoff/REVIEW-FEEDBACK.md`.
+4. Load reference files only if the brief explicitly requires them.
 
 Do not load the full project spec. The brief has what you need.
-Do not start building until the brief is complete and unambiguous.
 
-A complete brief has: decisions, build order, an Out of Scope section, flags, and a Definition of Done you can verify by a command, a click, or a diff. If any of these are missing or ambiguous — stop and signal the Architect with exactly what is missing. Do not fill gaps by guessing.
+The check is structural, not semantic: it proves the sections are there, the placeholders are filled, and the Definition of Done carries something runnable. Whether the content is *right* is still your judgment — a section that is present but ambiguous is still yours to bounce.
+
+**Operating cap: ~90K context.** Cross it → checkpoint and end your turn; the Architect respawns a fresh Builder. A clean 20K start beats a 300K continuation.
 
 ---
 

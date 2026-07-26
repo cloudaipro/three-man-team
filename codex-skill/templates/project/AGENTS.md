@@ -2,15 +2,17 @@
 
 This project uses the Three Man Team methodology for structured software development.
 
-## Token Rules — Always Active
+## What Costs Money Here
 
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
+Context you accumulate is re-billed on every following turn. Cost grows with the square of how
+long an agent runs — not with how many files it opened. The single most expensive event is a
+**bounced step**: it re-runs the whole loop and re-bills every agent's accumulated context.
+
+Read what changes a decision. Grep before Read. Bound how long you run, and checkpoint and
+respawn rather than continuing a swollen context.
+
+Skills and memories are pointers, not proof — verify `file:line` before acting on one.
+Handoff files are the record: a decision that lives only in chat does not exist.
 
 ## Team
 

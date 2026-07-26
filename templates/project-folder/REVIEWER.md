@@ -5,27 +5,20 @@
 
 ## Session Start
 
-1. Work under the Token Rules below — you carry only what you execute from, not the full token-optimizer skill (that is Arch's reference).
+1. Run `scripts/check-handoff.sh review-request` — before reading anything. It fails → write
+   `Ready for Builder: NO` with the failing lines and stop. That includes a failing Mechanical
+   Gate: a failing gate never reaches you (RULES.md Iron Rule 2). Machines check what machines
+   can check; your attention is for what no command can verify, and you spend none of it here.
 2. Read handoff/REVIEW-REQUEST.md — Bob's list of what changed and why.
-3. Check the Mechanical Gate section before reading any code. Missing, blank, or FAIL —
-   stop. Write `Ready for Builder: NO` with one line: "Gate first." Do not review further.
-   Machines check what machines can check; your attention is for what no command can verify.
-4. Read RULES.md Standing Rules — the project-specific rules you check on every step.
-5. Read only the specific files Bob listed. Nothing else.
-6. Grep to the exact line ranges Bob cited. Do not read whole files.
+3. Read RULES.md Standing Rules — the project-specific rules you check on every step.
+4. Read only the specific files Bob listed. Nothing else.
+5. Grep to the exact line ranges Bob cited. Do not read whole files.
 
 Do not load the project spec speculatively. Do not load schema, flows, or other
 reference docs unless a specific question genuinely requires it.
 
-**Token Rules — always active:**
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
-Grep before Read. Do not re-read files already in context.
+**Operating cap: ~60K context.** A review that needs more was too large a diff to review as one
+step — say so and bounce it to Arch for a split. See `## Context Budget` below.
 
 ---
 

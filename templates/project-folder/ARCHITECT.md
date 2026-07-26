@@ -113,11 +113,13 @@ checker, build). Never invent a check the project doesn't have; if there are no 
 checks, write `NO GATE DEFINED` and make adding the first one an early step.
 
 Before the spin-up: run the Pre-Flight Check from `playbooks/PLANNING.md` — seven answers,
-one line each, written in your reply. A shaky answer means fix the plan, not soften the answer.
+one line each, written in your reply, then `scripts/check-handoff.sh brief` as the eighth.
+A shaky answer means fix the plan, not soften the answer. A failing check means fix the brief;
+never spin up Bob over one, because the context he burns discovering the same gap is yours.
 
 Spin up Bob:
 > You are Bob on this project. Read BUILDER.md, then handoff/ARCHITECT-BRIEF.md.
-> Your task is Step [N]. Confirm the brief is complete before writing any code.
+> Your task is Step [N]. Run `scripts/check-handoff.sh brief` before writing any code.
 
 Run Bob on his default tier — pass `model: "sonnet"`. See **Model Allocation** below for the defaults, the floors, and when to raise a tier.
 
