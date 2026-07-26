@@ -82,7 +82,8 @@ context than the whole feature is worth.
    - Mechanical Gate results — each command and its outcome
    - Open questions or uncertainties
    - Set `Ready for Review: YES`
-4. Stop. Do not touch any file until the Reviewer posts `handoff/REVIEW-FEEDBACK.md` with `Ready for Builder: YES`.
+4. Run `scripts/check-handoff.sh review-request`. It fails → fix it now. The Reviewer runs the same command as their first act, and a structural bounce costs the team a whole review cycle for something one command catches.
+5. Stop. Do not touch any file until the Reviewer posts `handoff/REVIEW-FEEDBACK.md` with `Ready for Builder: YES`.
 
 ---
 

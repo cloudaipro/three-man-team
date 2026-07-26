@@ -190,6 +190,17 @@ ROLEEOF
     echo "  ✓ Created RULES.md (Architect drafts the gate at first brief)"
   fi
 
+  # scripts/check-handoff.sh — framework-owned, always refreshed, never skipped.
+  # This one breaks the additive-only rule on purpose: RULES.md's Mechanical Gate
+  # calls it by name, so a project carrying the gate row without a current copy of
+  # the script has a gate command that fails on every step. It holds no project
+  # content, so there is nothing to preserve. This is the manifest.md lesson of
+  # v1.9.0 a second time — installing the file that calls a thing but not the thing.
+  mkdir -p "$dest/scripts"
+  cp "$TPL/project/scripts/check-handoff.sh" "$dest/scripts/check-handoff.sh"
+  chmod +x "$dest/scripts/check-handoff.sh"
+  echo "  ✓ Installed scripts/check-handoff.sh (framework-owned — refreshed every run)"
+
   # manifest.md — version marker the skill's version check reads.
   # Stamped from the bundled registry, never from the template's own text: a
   # hardcoded version in the template drifts silently every release (it sat at
@@ -208,11 +219,17 @@ ROLEEOF
     fi
   fi
 
-  # Handoff templates
+  # Handoff templates — the structured ones, not bare stubs. scripts/check-handoff.sh
+  # asserts these files carry their sections (Decisions, Out of Scope, Flags, a
+  # Definition of Done with a runnable command), so a two-line stub gives the
+  # Architect nothing to fill in and the check nothing to find.
   mkdir -p "$dest/handoff"
   for hf in ARCHITECT-BRIEF.md BUILD-LOG.md REVIEW-REQUEST.md REVIEW-FEEDBACK.md SESSION-CHECKPOINT.md; do
     if [ -f "$dest/handoff/$hf" ]; then
       echo "  ✓ handoff/$hf already exists — not overwriting"
+    elif [ -f "$TPL/project/handoff/$hf" ]; then
+      cp "$TPL/project/handoff/$hf" "$dest/handoff/$hf"
+      echo "  ✓ Created handoff/$hf"
     else
       echo "# $hf" > "$dest/handoff/$hf"
       echo "*Three Man Team handoff file.*" >> "$dest/handoff/$hf"
@@ -220,7 +237,7 @@ ROLEEOF
 
 ---
 EOF
-      echo "  ✓ Created handoff/$hf"
+      echo "  ✓ Created handoff/$hf (stub — template missing from the bundle)"
     fi
   done
 

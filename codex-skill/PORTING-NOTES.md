@@ -83,3 +83,41 @@ model selection. The Claude build's role files carry the literal Opus / Sonnet /
 the `ENABLE_PROMPT_CACHING_1H` install step; the Codex build now carries the Sol / Terra / Luna
 analog (§1) but still omits the cache step (§2). This file records why — so the remaining
 divergence stays a deliberate choice rather than a drift someone "fixes" later.*
+
+---
+
+## 3. v2.3.0 context engineering — ported in full, with one scaffolder gap fixed after
+
+v2.3.0 applied Anthropic's Claude 5 context-engineering guidance to the framework. Every
+part of it ported to the Codex build, because none of it depends on a Claude-only feature:
+
+| v2.3.0 change | Codex status |
+|---|---|
+| `scripts/check-handoff.sh` | ported — `templates/project/scripts/`, byte-identical to the Claude copy |
+| RULES.md gate row + call-site table | ported — `templates/project/RULES.md` is in the identical-copy set |
+| Token Rules block → cost model + gotchas | ported — `SKILL.md` and `templates/project/AGENTS.md` |
+| token-optimizer de-duplication | ported — `references/token-optimization.md` is in the identical-copy set |
+| Pre-Flight eighth line | ported — `references/playbooks/PLANNING.md`, `references/role-templates/ARCHITECT.md` |
+| Builder/Reviewer call sites | ported — `references/role-templates/BUILDER.md`, `REVIEWER.md` |
+
+**The gap this section exists to record.** v2.3.0 shipped with the Codex *scaffolder* still
+unaware of any of it: `scripts/setup-project.sh` installed `RULES.md` — which now carries a
+gate row calling `scripts/check-handoff.sh` — but never installed the script. Every fresh
+Codex install got a Mechanical Gate that fails on every step, and a failing gate blocks every
+review request. The role-template and reference edits were all correct; only the installer
+was behind.
+
+This is the **manifest.md bug of v1.9.0, exactly repeated**: the scaffolder installed the file
+that references a thing without installing the thing. Both times the referencing file was
+`RULES.md` or its neighbours, both times nothing consumed the missing file until a user hit it.
+
+By the framework's own rule — a lesson that lands twice becomes a check, not a third manual
+fix — `scripts/check-consistency.sh` now asserts that `setup-project.sh` installs every project
+file its other installed files reference by name. A third repetition should be impossible.
+
+The scaffolder also now copies the **structured** handoff templates rather than writing
+two-line stubs. `check-handoff.sh` asserts a brief carries Decisions, Out of Scope, Flags, and a
+Definition of Done with a runnable command; a stub gives the Architect nothing to fill in and
+the check nothing to find.
+
+**Open:** nothing. The two builds are at parity on v2.3.0.
