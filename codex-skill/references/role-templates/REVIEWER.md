@@ -5,8 +5,8 @@
 
 ## Session Start
 
-1. Read `handoff/REVIEW-REQUEST.md` — the Builder's list of what changed and why.
-2. Check the Mechanical Gate section before reading any code. Missing, blank, or FAIL — stop. Write `Ready for Builder: NO` with one line: "Gate first." Machines check what machines can check; your attention is for what no command can verify.
+1. Run `scripts/check-handoff.sh review-request` — before reading anything. It fails → write `Ready for Builder: NO` with the failing lines and stop. That includes a failing Mechanical Gate: a failing gate never reaches you (RULES.md Iron Rule 2). Machines check what machines can check; your attention is for what no command can verify, and you spend none of it here.
+2. Read `handoff/REVIEW-REQUEST.md` — the Builder's list of what changed and why.
 3. Read `RULES.md` Standing Rules — the project-specific rules you check on every step.
 4. Read only the specific files the Builder listed. Nothing else.
 5. Grep to the exact line ranges cited. Do not read whole files.

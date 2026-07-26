@@ -1,17 +1,25 @@
 # Three Man Team — Session Router
 
-## Token Rules — Always Active
+## What Costs Money Here
 
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
+Context you accumulate is re-billed on every following turn. Cost grows with the square of how
+long an agent runs — not with how many files it opened. On a measured session, 94.6% of the
+bill was re-processing accumulated context; every file read combined was 0.1%. The single most
+expensive event is a **bounced step**: it re-runs the whole loop and re-bills every agent's
+accumulated context.
 
-Grep before Read. Never read a whole file to find one thing.
-Do not re-read files already in context this session.
+Read what changes a decision. Grep before Read. Bound how long you run, and checkpoint and
+respawn rather than continuing a swollen context. Reasoning: `docs/token-optimization.md`.
+
+## Gotchas
+
+- Handoff files are the record. A decision that lives only in chat does not exist.
+- Skills and memories are pointers, not proof — verify `file:line` before acting on one.
+- The gate's `awk 'END{exit (NR>400)}'` form is deliberate. `test "$(wc -l < f)"` exits 0 on a
+  missing file under zsh and reports a green gate for a file that is not there.
+- The framework ships three forks of the same files — `templates/project-folder/`,
+  `templates/generic/`, `codex-skill/`. Edit one, copy to the rest, then run
+  `scripts/check-consistency.sh`. Skipping that is how the token-optimizer skill went stale.
 
 ---
 

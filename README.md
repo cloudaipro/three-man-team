@@ -12,15 +12,16 @@
 
 ---
 
-## What's New — v2.2.0
+## What's New — v2.3.0
 
-**Trim the floor the busiest agents carry.** A framework whose thesis is *context is the cost* was making every spawned Builder and Reviewer load the full ~668-token token-optimizer essay first — of which only the five-rule block and grep-before-read are execution-relevant to a subagent. Under v2.0.0's respawn-at-checkpoint design, that essay reloads per respawn and is re-sent every turn of the subagent's life (the O(N²) carry axis). This release cuts what the subagents carry — validated against 2026 practice on agent token economics.
+**An accuracy bug is a token bug.** Anthropic's [new rules of context engineering](https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models) (2026-07-24) removed over 80% of Claude Code's system prompt with no measurable eval loss, naming overconstraint and *conflicting instructions across layers* as the cause of the bloat. Combined with v2.0.0's finding that 94.6% of a real session's bill was re-processing accumulated context, the conclusion is that trimming a role file is a rounding error — the prelude caches — while a **bounced step** re-runs the whole loop and re-bills every agent's context. So this release spends its effort on making handoffs mechanically checkable and deleting instructions that conflict.
 
-- **Subagents carry rules inline, not the essay** — Bob and Richard get a compact **Token Rules** block in their own role file and stop loading the skill; the full essay stays the Architect's reference. **~578 tokens off each subagent's permanent floor**, saved every turn and every respawn. The inline block is deliberate point-of-use repetition (accuracy-safe per the prompt-repetition research) and also means a subagent with the skill uninstalled still has its discipline.
-- **Model routing stated once** — the Claude `ARCHITECT.md` stated the sonnet/haiku policy in three places; now **Model Allocation** is the single source, spin-ups just point to it. Removes a drift surface from the longest-lived agent's always-carried file.
-- **Claude-build only** — the Codex build was already lean here; its v2.1.0 Sol / Terra / Luna routing is untouched.
+- **`scripts/check-handoff.sh`** — asserts a brief or review request is structurally complete before anyone builds or reviews against it: sections present, no unfilled placeholders, and a Definition of Done that carries a runnable command. Wired into the Mechanical Gate, the Architect's Pre-Flight, and both subagents' session starts. *A criterion you cannot express as a command means the step is not specified sharply enough to build* — surfaced at brief time for one line instead of at review time for a whole loop
+- **The token-optimizer skill your agents load was stale** — drifted off the docs copy and missing the cost model, the cache setting, and the model routing table, while `CLAUDE.md` told every role to load it first. Now one source, three identical copies, guarded by the repo self-audit
+- **The five-rule Token Rules block is gone**, replaced by the cost model and a Gotchas section. Two of the five were harmful, not just redundant: "trust it, skip the file read" tells an agent to act on possibly-stale memory, and the 20-line subagent threshold sits below the cost of spawning one. This reverses a deliberate v2.2.0 call — see the CHANGELOG for why the reasoning changed
+- **`REVIEWER.md`'s checklists were deliberately left intact** — "judgment over rules" is a current-generation finding, and the `haiku` alias resolves to a smaller, older-generation model
 
-**v2.1.0** converged model routing — the Codex build now routes Sol / Terra / Luna, the analog of Opus / Sonnet / Haiku. **v2.0.0** made *context the cost* — per-role context budgets, model-tier routing, and the 1-hour prompt cache. **v1.9.0** made BUILD-LOG size a mechanical gate. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
+**v2.2.0** trimmed the floor the busiest agents carry — subagents stopped loading the full token-optimizer essay, and the Architect's model-routing policy was stated once instead of three times. **v2.1.0** converged model routing — the Codex build now routes Sol / Terra / Luna, the analog of Opus / Sonnet / Haiku. **v2.0.0** made *context the cost* — per-role context budgets, model-tier routing, and the 1-hour prompt cache. **v1.9.0** made BUILD-LOG size a mechanical gate. **v1.7.0** added the `RULES.md` quality contract. **v1.6.0** added the Codex skill (`codex-skill/`).
 
 See [all releases →](https://github.com/cloudaipro/three-man-team/releases)
 
@@ -165,17 +166,24 @@ Architect, Builder, Reviewer are the defaults. Rename them to anything — Arch 
 
 ## Token Optimization
 
-Every session starts with five rules baked into CLAUDE.md:
+The expensive thing in a multi-agent build is not what an agent loads — it is what it
+**carries**. Context accumulates and is re-billed on every following turn, so cost grows with
+the square of how long an agent runs. Measured on a real multi-hour session: 94.6% of the bill
+was re-processing accumulated context, and every file read combined was 0.1%.
 
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
+So the framework optimizes the things that actually move that number:
 
-The token-optimizer skill ships with every install and auto-loads via CLAUDE.md — no manual setup required.
+- **Bounded role context** — a cap per role, then checkpoint and respawn instead of continuing
+  a swollen context
+- **A warm cache across handoffs** — the 1-hour prompt cache TTL, because every handoff gap is
+  longer than the 5-minute default
+- **Model tiers matched to the job** — Architect on Opus, Builder on Sonnet, Reviewer on Haiku
+- **Fewer bounced steps** — a rejected step re-runs the whole loop and re-bills every agent's
+  context, which makes the Mechanical Gate and `scripts/check-handoff.sh` token optimizations
+  as much as quality controls
+
+The token-optimizer skill ships with every install and auto-loads via CLAUDE.md — no manual
+setup required. Full reasoning: [docs/token-optimization.md](docs/token-optimization.md).
 
 For bash output compression on top of these rules, see [RTK](https://github.com/rtk-ai/rtk) —
 a separate tool that compresses `find`, `ls`, `grep` output before it reaches Claude's context.

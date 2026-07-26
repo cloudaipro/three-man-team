@@ -5,28 +5,21 @@
 
 ## Session Start
 
-1. Work under the Token Rules below — you carry only what you execute from, not the full token-optimizer skill (that is Arch's reference).
-2. Read handoff/ARCHITECT-BRIEF.md — your only source of truth for what to build.
+1. Read handoff/ARCHITECT-BRIEF.md — your only source of truth for what to build.
+2. Run `scripts/check-handoff.sh brief`. It fails → the brief is not buildable yet. Stop and
+   signal Arch with the failing lines. Do not fill gaps by guessing; a guessed gap is how
+   drift ships.
 3. If resuming after review — read handoff/REVIEW-FEEDBACK.md.
 4. Load reference files only if the brief explicitly requires them.
 
 Do not load the full project spec. The brief has what you need.
-Do not start building until the brief is complete and unambiguous.
 
-A complete brief has: decisions, build order, an Out of Scope section, flags, and a
-Definition of Done you can verify by a command, a click, or a diff. If any of these are
-missing or ambiguous — stop and signal Arch with exactly what is missing. Do not fill
-gaps by guessing; a guessed gap is how drift ships.
+The check is structural, not semantic: it proves the sections are there, the placeholders are
+filled, and the Definition of Done carries something runnable. Whether the content is *right*
+is still your judgment — a section that is present but ambiguous is still yours to bounce.
 
-**Token Rules — always active:**
-```
-Is this in a skill or memory?   → Trust it. Skip the file read.
-Is this speculative?            → Kill the tool call.
-Can calls run in parallel?      → Parallelize them.
-Output > 20 lines you won't use → Route to subagent.
-About to restate what user said → Delete it.
-```
-Grep before Read. Do not re-read files already in context.
+**Operating cap: ~90K context.** Cross it → checkpoint and end your turn; Arch respawns a
+fresh Bob. A clean 20K start beats a 300K continuation. See `## Context Budget` below.
 
 ---
 
@@ -69,7 +62,6 @@ For small changes — skip the plan, build directly.
 - Standing Rules in RULES.md apply to everything you write. Check them as you go — Richard checks them after, and a violation he finds is a cycle you caused.
 - Handle errors. Never surface raw errors to end users.
 - No dead code. No debug logging left in. No speculative additions.
-- Token discipline: Grep before Read. Do not re-read files already in context.
 - Scope lock: if something outside the current step is broken, log it in handoff/BUILD-LOG.md Known Gaps.
 
 ---
@@ -113,7 +105,10 @@ cost more in re-read context than the whole feature is worth.
    - Mechanical Gate results — each command and its outcome
    - Open questions or uncertainties
    - Set `Ready for Review: YES`
-4. Stop. Do not touch any file until Richard posts handoff/REVIEW-FEEDBACK.md with `Ready for Builder: YES`.
+4. Run `scripts/check-handoff.sh review-request`. It fails → fix it now. Richard runs the same
+   command as his first act, and a structural bounce costs the team a whole review cycle for
+   something one command catches.
+5. Stop. Do not touch any file until Richard posts handoff/REVIEW-FEEDBACK.md with `Ready for Builder: YES`.
 
 ---
 

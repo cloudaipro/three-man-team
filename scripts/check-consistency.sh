@@ -154,6 +154,7 @@ echo "— Template-set parity (project-folder ↔ generic)"
 
 # Framework-owned files that must exist in both template sets
 PARITY_FILES="RULES.md
+scripts/check-handoff.sh
 playbooks/PLANNING.md
 playbooks/DIAGNOSIS.md
 playbooks/BRIEF-EXAMPLES.md
@@ -183,6 +184,8 @@ done <<< "$PARITY_FILES"
 
 # Role-neutral files must be byte-identical everywhere they ship
 IDENTICAL_SETS="RULES.md:templates/project-folder/RULES.md templates/generic/RULES.md codex-skill/templates/project/RULES.md
+check-handoff.sh:templates/project-folder/scripts/check-handoff.sh templates/generic/scripts/check-handoff.sh codex-skill/templates/project/scripts/check-handoff.sh
+token-optimization.md:docs/token-optimization.md templates/project-folder/.claude/skills/token-optimization.md codex-skill/references/token-optimization.md
 PLANNING.md:templates/project-folder/playbooks/PLANNING.md templates/generic/playbooks/PLANNING.md codex-skill/references/playbooks/PLANNING.md
 DIAGNOSIS.md:templates/project-folder/playbooks/DIAGNOSIS.md templates/generic/playbooks/DIAGNOSIS.md codex-skill/references/playbooks/DIAGNOSIS.md
 BRIEF-EXAMPLES.md:templates/project-folder/playbooks/BRIEF-EXAMPLES.md templates/generic/playbooks/BRIEF-EXAMPLES.md codex-skill/references/playbooks/BRIEF-EXAMPLES.md
@@ -222,6 +225,7 @@ playbooks/VERSION-CHECK.md
 .claude/commands/architect.md
 .claude/commands/tmt-setup.md
 .claude/skills/token-optimization.md
+scripts/check-handoff.sh
 RULES.md
 ARCHITECT.md
 BUILDER.md
@@ -235,6 +239,20 @@ while IFS= read -r f; do
   fi
 done <<< "$UPGRADE_SOURCES"
 [ "$UPG_OK" = 1 ] && ok "every file the upgrade tool ships exists in the clone"
+
+# A shipped script that lands without its executable bit is a gate command that fails on
+# every project that installs it — and the failure looks like a broken gate, not a broken
+# install. git tracks the mode, so assert it here.
+EXEC_OK=1
+for f in templates/project-folder/scripts/check-handoff.sh \
+         templates/generic/scripts/check-handoff.sh \
+         codex-skill/templates/project/scripts/check-handoff.sh; do
+  if [ ! -x "$f" ]; then
+    problem "$f is not executable — projects that install it get a failing gate command"
+    EXEC_OK=0
+  fi
+done
+[ "$EXEC_OK" = 1 ] && ok "shipped handoff-check scripts are executable"
 
 echo ""
 if [ "$FAIL" = 1 ]; then

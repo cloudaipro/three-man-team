@@ -276,6 +276,15 @@ if [ "$DRY" = 0 ]; then
 fi
 plan ".claude/skills/token-optimization.md refreshed"
 
+# 3b. handoff structure check — framework-owned, always refreshed. RULES.md references it
+# as a gate command, so a project that has the rule but not the script fails its own gate.
+if [ "$DRY" = 0 ]; then
+  mkdir -p "$PROJECT/scripts"
+  cp "$TPL/scripts/check-handoff.sh" "$PROJECT/scripts/"
+  chmod +x "$PROJECT/scripts/check-handoff.sh"
+fi
+plan "scripts/check-handoff.sh refreshed"
+
 # 4. RULES.md quality contract (skeleton — never overwrites a drafted one)
 if [ ! -f "$PROJECT/RULES.md" ]; then
   [ "$DRY" = 0 ] && cp "$TPL/RULES.md" "$PROJECT/RULES.md"

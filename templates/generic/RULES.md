@@ -21,7 +21,20 @@ mechanically pays for it in review cycles.
 | Command | Proves |
 |---|---|
 | `awk 'END{exit (NR>400)}' handoff/BUILD-LOG.md` | BUILD-LOG has not outgrown rotation. Ships with the framework — do not delete it |
+| `scripts/check-handoff.sh brief` | The brief this step was built from is structurally complete — sections present, placeholders filled, Definition of Done carries a command. Ships with the framework — do not delete it |
 | `[command]` | [What passing means — e.g. "no lint errors", "all tests green", "build compiles"] |
+
+The handoff check runs at three points, and only the third is in the table above:
+
+| Who | When | Command |
+|---|---|---|
+| Architect | last line of the Pre-Flight Check, before spinning up the Builder | `scripts/check-handoff.sh brief` |
+| Builder | session start, before writing any code | `scripts/check-handoff.sh brief` |
+| Reviewer | session start, before reading any code | `scripts/check-handoff.sh review-request` |
+
+Catching a malformed handoff early is the whole point — a Builder who discovers at hour three
+that the brief never had an Out of Scope section has already spent the context. The gate row is
+the backstop for the case where the brief was edited mid-step.
 
 The handoff-size row is the one gate command the framework provides. It is here because the
 Builder writes BUILD-LOG and the Architect rotates it — so without a mechanical check, the

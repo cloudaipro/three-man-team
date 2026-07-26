@@ -22,10 +22,11 @@ jobs:
           bash -n upgrade
           bash -n scripts/check-consistency.sh
           bash -n codex-skill/scripts/setup-project.sh
+          bash -n templates/project-folder/scripts/check-handoff.sh
 
       - name: Shellcheck
         run: |
-          shellcheck -S error setup upgrade scripts/check-consistency.sh codex-skill/scripts/setup-project.sh
+          shellcheck -S error setup upgrade scripts/check-consistency.sh codex-skill/scripts/setup-project.sh templates/project-folder/scripts/check-handoff.sh
 
       - name: Release JSON well-formed
         run: |
