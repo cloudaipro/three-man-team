@@ -11,7 +11,7 @@ UPGRADE = os.path.join(REPO_ROOT, "upgrade")
 
 
 class CodexUpgradeLocationTests(unittest.TestCase):
-    def run_upgrade(self, home, project, **extra_environment):
+    def run_upgrade(self, home, project, dry_run=True, **extra_environment):
         bin_dir = os.path.join(home, "bin")
         os.makedirs(bin_dir, exist_ok=True)
         curl = os.path.join(bin_dir, "curl")
@@ -22,8 +22,12 @@ class CodexUpgradeLocationTests(unittest.TestCase):
         environment = os.environ.copy()
         environment.update({"HOME": home, "PATH": bin_dir + os.pathsep + environment["PATH"]})
         environment.update(extra_environment)
+        command = [UPGRADE, "codex"]
+        if dry_run:
+            command.append("--dry-run")
+        command.append(project)
         result = subprocess.run(
-            [UPGRADE, "codex", "--dry-run", project],
+            command,
             text=True,
             capture_output=True,
             env=environment,
@@ -87,6 +91,25 @@ class CodexUpgradeLocationTests(unittest.TestCase):
             )
 
             self.assertIn("Skill dir:  " + selected_skill, output)
+
+    def test_refresh_backup_is_outside_scanned_skills_directory(self):
+        with tempfile.TemporaryDirectory() as root:
+            home = os.path.join(root, "home")
+            project = self.make_project(root)
+            repo_skill = os.path.join(project, ".agents", "skills", "three-man-team")
+            os.makedirs(repo_skill)
+            with open(os.path.join(repo_skill, "old-version"), "w", encoding="utf-8") as handle:
+                handle.write("preserve me\n")
+
+            output = self.run_upgrade(home, project, dry_run=False)
+
+            backup_root = os.path.join(project, ".agents", "skill-backups")
+            backups = os.listdir(backup_root)
+            self.assertEqual(1, len(backups))
+            backup = os.path.join(backup_root, backups[0])
+            self.assertTrue(os.path.isfile(os.path.join(backup, "old-version")))
+            self.assertNotIn(".backup-", " ".join(os.listdir(os.path.dirname(repo_skill))))
+            self.assertIn("previous version: " + backup, output)
 
 
 if __name__ == "__main__":
