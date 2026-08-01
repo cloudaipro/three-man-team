@@ -1,0 +1,30 @@
+{
+  "version": "v2.1.0",
+  "released": "2026-07-24",
+  "from_version": "v2.0.0",
+  "arch_opening": "There is an update available — version 2.1.0. It closes the one divergence the Codex port could not: at v2.0.0 the Claude build routed by model tier — Builder on Sonnet, Reviewer on Haiku, Architect on Opus — but Codex had no tier knob, only reasoning effort, so the skill could only frame it as 'match effort to the role.' GPT-5.6's Sol, Terra, and Luna tiers are that knob. This release wires the Codex build's three roles to the three tiers — Architect on Sol, Builder on Terra, Reviewer on Luna — the direct analog of the Claude routing, plus the one real gotcha: a Sol parent runs its sub-agents as Sol unless you enable multi-agent routing. It only touches the Codex skill; if you run the Claude build, nothing changes. I'll walk you through what applies.",
+  "changes": [
+    {
+      "id": "codex-model-tier-routing",
+      "type": "feature",
+      "title": "Codex routes Architect to Sol, Builder to Terra, Reviewer to Luna",
+      "what_changed": "codex-skill/SKILL.md (role table, both spawn instructions, Job 2 Context Budget), codex-skill/references/role-templates/ARCHITECT.md (spawn instructions + Context Budget), and codex-skill/references/token-optimization.md (lever 2) now name a model tier per role: Architect on Sol (gpt-5.6-sol), Builder on Terra (gpt-5.6-terra), Reviewer on Luna (gpt-5.6-luna). Reasoning effort becomes the within-tier knob, with the top effort (xhigh/max, or Sol's ultra mode) reserved for irreversible and load-bearing steps.",
+      "old_behavior": "Codex had no model-tier equivalent to the Claude build's Opus/Sonnet/Haiku, so v2.0.0's model-routing win could not port. The skill framed the principle as 'match effort to the role' and named the Claude tiers only as an analogy, carrying an Open item to revisit if Codex ever exposed per-sub-agent model selection.",
+      "new_behavior": "GPT-5.6 (GA 2026-07-09) ships Sol/Terra/Luna as durable capability tiers selected per model in ~/.codex/config.toml, plus a per-sub-agent override. The three roles now route to the three tiers — flagship judgment on Sol, bounded execution on Terra, gate-backed review on Luna — the direct analog of the Claude routing.",
+      "user_impact_plain": "The Architect makes the decisions that are expensive to get wrong; Builder and Reviewer execute against a spec and a gate, which is exactly the bounded work the cheaper Terra and Luna tiers handle well. Same cost logic that made Sonnet/Haiku safe on the Claude build.",
+      "how_to_assess": "Codex users: set the tiers when spawning (Builder to Terra, Reviewer to Luna) and confirm the sub-agent's actual model — a Sol parent silently keeps sub-agents on Sol unless multi-agent routing is enabled (see the porting-notes change). Claude-build users: nothing to do; Opus/Sonnet/Haiku is unchanged.",
+      "user_decision": "If you run the Codex build, want me to confirm your ~/.codex config routes sub-agents to Terra/Luna rather than inheriting Sol?"
+    },
+    {
+      "id": "porting-notes-converged",
+      "type": "improvement",
+      "title": "PORTING-NOTES.md §1 rewritten from divergence to convergence",
+      "what_changed": "codex-skill/PORTING-NOTES.md §1 goes from 'Model routing does not exist on Codex' to 'converged in v2.1.0.' It keeps the history (why it did not port at v2.0.0), documents the config (~/.codex/config.toml model / model_reasoning_effort), and adds the routing caveat: a Sol parent inherits its model to spawned sub-agents unless multi-agent routing is enabled (Codex issue #31814; features.multi_agent_v2 / hide_spawn_agent_metadata, or a review_model-style override).",
+      "old_behavior": "The section documented model routing as a permanent Codex divergence and carried an Open item to revisit if the CLI exposed per-sub-agent model selection.",
+      "new_behavior": "The Open item is closed and the section is now the record of how the divergence converged — kept precisely so no one re-opens it — while §2 (the 1-hour prompt cache) is called out as the one remaining live divergence.",
+      "user_impact_plain": "The porting notes stay a deliberate map of where the two builds differ. §1 now says 'converged, here's how'; §2 still says 'Claude-Code only.'",
+      "how_to_assess": "Reference material — read §1 for the config and the sub-agent routing gotcha before relying on Terra/Luna spawns.",
+      "user_decision": "Nothing to decide — reference for the routing change above."
+    }
+  ]
+}

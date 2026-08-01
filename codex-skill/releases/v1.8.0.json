@@ -1,0 +1,42 @@
+{
+  "version": "v1.8.0",
+  "released": "2026-07-17",
+  "from_version": "v1.7.0",
+  "arch_opening": "There is an update available — version 1.8.0. The theme is 'the log must not grow forever': token-usage fixes measured on a real project. BUILD-LOG now rotates completed history into an archive instead of growing unbounded, and the version-check instructions moved out of the role file into a playbook loaded only when an update actually exists. This update changes your Architect role file's Session Start — I'll walk you through exactly what applies.",
+  "changes": [
+    {
+      "id": "version-check-extracted",
+      "type": "improvement",
+      "title": "Version check moved to playbooks/VERSION-CHECK.md",
+      "what_changed": "The Architect role file's Session Start step 2 shrank from a ~450-word procedure to three lines: read version_notified, fetch latest.json, skip silently on match or network failure — otherwise load the new playbooks/VERSION-CHECK.md, which now holds the full update walk-through (version groups, critical-first ordering, arch_opening, how_to_assess, recording version_notified).",
+      "old_behavior": "The full walk-through procedure sat inline in the role file and was parsed on every single session start, even though it applies only on the rare session where an update exists.",
+      "new_behavior": "Session start carries only the cheap pre-check (~500 tokens saved per session); the expensive instructions load on demand, exactly when an update is found.",
+      "user_impact_plain": "Every Architect session starts ~500 tokens lighter with identical behavior — the walk-through still runs, just only when there is something to walk through.",
+      "user_impact_critical": "If the Architect role file is updated without installing playbooks/VERSION-CHECK.md, the next version check will reference a file that does not exist and the update walk breaks. The two changes must land together — that is why this version is a mandatory checkpoint.",
+      "how_to_assess": "Check whether playbooks/VERSION-CHECK.md exists in the project. If not: run the clone's ./upgrade tool (it refreshes playbooks/ additively) or copy templates/project-folder/playbooks/VERSION-CHECK.md from the clone. Then update the user's Architect role file Session Start step 2 to the three-line form the v1.8.0 template carries — preserving their team names and personas. Never update the role file without installing the playbook first.",
+      "user_decision": "Want me to install playbooks/VERSION-CHECK.md and compress the version-check step in your Architect file? Behavior is identical — it just stops paying for the instructions on sessions that don't need them."
+    },
+    {
+      "id": "build-log-rotation",
+      "type": "improvement",
+      "title": "BUILD-LOG rotation — completed history moves to an archive",
+      "what_changed": "A new Anti-Drift rule in the Architect role file (and the Codex skill): when a step clears, or BUILD-LOG passes ~300 lines, completed-step details, closed Known Gaps, and full Lesson text move to handoff/archive/BUILD-LOG-<YYYY-MM>.md. BUILD-LOG keeps Current Status, the active step, open gaps, one-line lessons, and one-line pointers to archived steps.",
+      "old_behavior": "BUILD-LOG grew unbounded — 'update immediately' plus 'never delete' meant every full read cost more each step. A real project hit 38KB (~10K tokens per read) in four steps.",
+      "new_behavior": "BUILD-LOG stays lean and cheap to read; nothing is lost — full history lives in the archive file, read only when investigating how a past step was built.",
+      "user_impact_plain": "Sessions that fall back to reading BUILD-LOG (stale or missing checkpoint) cost a fraction of what they did, and the saving grows with project age instead of shrinking.",
+      "how_to_assess": "Check the size of handoff/BUILD-LOG.md. Over ~300 lines: offer to perform the first rotation now — create handoff/archive/BUILD-LOG-<YYYY-MM>.md, move completed steps, closed Known Gaps, and full Lesson text there, leave one-line pointers. Then add the rotation rule to the user's Architect role file Anti-Drift section, preserving their team names.",
+      "user_decision": "Want me to rotate your BUILD-LOG into an archive now and add the rotation rule so it stays lean? Nothing is deleted — completed history moves to handoff/archive/."
+    },
+    {
+      "id": "temp-artifact-removed",
+      "type": "fix",
+      "title": "Stale _temp/ARCHITECT.md removed from the project-folder template",
+      "what_changed": "templates/project-folder/_temp/ARCHITECT.md — an unreferenced leftover copy of an old Architect role file — is deleted from the template set. No script or document referenced it.",
+      "old_behavior": "Projects installed from the project-folder template carried a stale ~6KB duplicate role file in _temp/, an accidental-read hazard for any session grepping for role definitions.",
+      "new_behavior": "New installs ship without it.",
+      "user_impact_plain": "One less stale file that could be read by mistake and silently contradict the real role file.",
+      "how_to_assess": "Check whether _temp/ARCHITECT.md exists in the project and whether manifest.md references it (it never should). If present and unreferenced, offer to delete the _temp directory.",
+      "user_decision": "You have a stale _temp/ARCHITECT.md from the old template — delete it?"
+    }
+  ]
+}

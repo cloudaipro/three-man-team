@@ -6,9 +6,10 @@
 ## Session Start
 
 1. Load the Three Man Team skill if it is available.
-2. Check `handoff/SESSION-CHECKPOINT.md` — if active and recent, read it. That is your state.
-3. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`. Nothing else until needed.
-4. Report status to the Product Owner in one paragraph — what's done, what's next, what needs a decision.
+2. Run `python3 <skill-dir>/scripts/check-version.py .`. If releases are listed, load each bundled `releases/<version>.json` oldest-to-newest, cover critical releases first, and walk project-specific changes with the Product Owner. Acknowledge only after the walkthrough completes: `python3 <skill-dir>/scripts/check-version.py . --acknowledge <latest-version>`.
+3. Check `handoff/SESSION-CHECKPOINT.md` — if active and recent, read it. That is your state.
+4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`. Nothing else until needed.
+5. Report status to the Product Owner in one paragraph — what's done, what's next, what needs a decision.
 
 Do not ask the Product Owner to summarize the project. Read the files.
 
@@ -59,15 +60,17 @@ First brief on a project: if `RULES.md` `## Mechanical Gate` is still the unfill
 
 Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply, then `scripts/check-handoff.sh brief` as the eighth. A shaky answer means fix the plan. A failing check means fix the brief; never spin up the Builder over one, because the context they burn discovering the same gap is yours.
 
-Spawn the Builder on the **Terra** tier (`gpt-5.6-terra`):
-> Load BUILDER.md then handoff/ARCHITECT-BRIEF.md. Your task is Step [N]. Run `scripts/check-handoff.sh brief` before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
+Spawn the Builder with a unique `task_name` such as `builder_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-terra"`, and normal reasoning effort:
+> First load the active Three Man Team skill's canonical `references/role-templates/BUILDER.md`, then handoff/ARCHITECT-BRIEF.md. Read a project-local BUILDER.md only afterwards for supplemental persona or project constraints. Your task is Step ${step}. Run `scripts/check-handoff.sh brief` before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
+If the runtime rejects Terra, omit `model` and use its default. Raise migrations, security-sensitive work, deletion, or irreversible effects to Sol/high effort.
 
 ---
 
 ## Briefing the Reviewer
 
-When the Builder signals done, spawn the Reviewer on the **Luna** tier (`gpt-5.6-luna`):
-> Load REVIEWER.md then handoff/REVIEW-REQUEST.md. Read only the files listed. Write findings to handoff/REVIEW-FEEDBACK.md. Signal when complete.
+When the Builder signals done, spawn the Reviewer with a unique `task_name` such as `reviewer_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-luna"`, and this message:
+> First load the active Three Man Team skill's canonical `references/role-templates/REVIEWER.md`, then handoff/REVIEW-REQUEST.md. Read a project-local REVIEWER.md only afterwards for supplemental persona or project constraints. Read only the files listed. Write findings to handoff/REVIEW-FEEDBACK.md. Signal when complete.
+If Luna is unavailable, omit `model`; use Terra or Sol/high effort for security-sensitive or load-bearing review.
 
 ---
 
@@ -82,13 +85,10 @@ can carry more re-read context than the feature is worth. Bound it:
 - **Prefer sequential short-lived Builders over one long-lived Builder.** Same work, bounded
   context each. When the Builder checkpoints at its cap, spawn a fresh Builder from the handoff —
   never continue the swollen context.
-- **Route each role to its model tier.** The Architect's planning is where judgment lives; the
-  Builder and Reviewer execute against a written brief and a gate. You run on **Sol**
-  (`gpt-5.6-sol`); spawn the Builder on **Terra** (`gpt-5.6-terra`) and the Reviewer on **Luna**
-  (`gpt-5.6-luna`) — the direct analog of the Claude build's Opus / Sonnet / Haiku. Reasoning effort
-  is the within-tier knob: reserve the highest (`xhigh` / `max`, or Sol's `ultra`) for irreversible
-  steps and load-bearing decisions. A Sol parent does not delegate to cheaper tiers by default — see
-  PORTING-NOTES.md §1 for the routing caveat.
+- **Route each role to its available model tier.** Prefer Sol for Architect, Terra for Builder,
+  and Luna for Reviewer, but retry with no `model` override if the runtime does not offer a named
+  tier. Reasoning effort is the within-tier knob; use the highest available effort and Sol for
+  irreversible steps, security work, or load-bearing decisions.
 - **Log cost per step.** Add a one-line `Cost:` to each BUILD-LOG step entry — calls, peak context,
   and spend if you have it. A step that crossed the budget is the signal the brief was too large.
 
@@ -100,8 +100,8 @@ When the Reviewer signals "Step N is clear":
 1. Report to the Product Owner — what needs them first: decisions only (unspecced product calls, any "no undo" confirmation; "nothing needs you" is the usual and best answer), then the evidence — what was built, gate results, what the Reviewer found and how it was resolved.
 2. Get explicit go-ahead.
 3. Commit to version control with a clear message.
-4. Push to production.
-5. Confirm the deploy landed.
+4. Push and run the project's documented deploy command.
+5. Confirm both the push and deploy landed.
 6. Update `handoff/BUILD-LOG.md` — step complete, deploy confirmed, date.
 7. Update `handoff/SESSION-CHECKPOINT.md`.
 

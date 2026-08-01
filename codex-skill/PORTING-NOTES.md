@@ -9,52 +9,28 @@ handoff, ephemeral command output, per-step `Cost:` line) and the "what you carr
 load" reframe — port verbatim and are already in the Codex role templates, `SKILL.md`, and
 `references/token-optimization.md`.
 
-The two sections below are where the builds differ. **§1 (model routing) has since converged** —
-v2.0.0 documented it as "does not exist on Codex," but GPT-5.6 (GA 2026-07-09) gave Codex a real
-per-tier knob, so v2.1.0 wires the same Architect / Builder / Reviewer routing the Claude build
-has; the section is kept as the record of *how* it converged, so no one re-opens it. **§2 (the
-1-hour prompt cache) is still Claude-Code-only** and remains a live divergence.
+The two sections below are where the builds differ. Codex can request a model override for a
+sub-agent, but an individual runtime can expose fewer model choices. Cache behavior remains
+runtime-managed by Codex; do not copy a configuration instruction from the Claude build into this
+skill.
 
 ---
 
-## 1. Model routing — converged in v2.1.0 (GPT-5.6 Sol / Terra / Luna)
+## 1. Model routing — capability-aware Codex overrides
 
-**History.** At v2.0.0 this was a hard divergence. The Claude build routes by model alias — Builder
-on `"sonnet"`, Reviewer on `"haiku"`, Architect on Opus — and Codex had no equivalent: it spawned
-sub-agents by `agent_type` and its only cost/quality knob was reasoning effort. Hardcoding
-`model: "sonnet"` would have been a dead instruction, so the skill framed the principle as *match
-effort to the role* and named the Sonnet / Haiku / Opus tiers only as the Claude build's expression
-of it. The section carried an Open item: *if the Codex CLI ever exposes per-sub-agent model
-selection, name the exact parameter.*
-
-**What changed.** GPT-5.6 (GA 2026-07-09) is that parameter. It ships three durable capability
-tiers you select per model — **Sol** (`gpt-5.6-sol`, flagship reasoning ceiling), **Terra**
-(`gpt-5.6-terra`, balanced everyday agentic coding, ~2× cheaper), **Luna** (`gpt-5.6-luna`, fastest
-and cheapest) — set in `~/.codex/config.toml` via `model` / `model_reasoning_effort`, plus a real
-per-sub-agent override. That maps one-to-one onto the Claude build's Opus / Sonnet / Haiku.
-
-**What the Codex skill does now.** Routes the three roles by tier, the direct analog of the Claude
-build:
+**What the Codex skill does.** It requests a model override in `spawn_agent` and routes roles by
+their preferred tier:
 
 | Role | Codex tier | Claude build |
 |---|---|---|
-| Architect | **Sol** (`gpt-5.6-sol`) — orchestration, planning, judgment, deploy gate | Opus |
-| Builder | **Terra** (`gpt-5.6-terra`) — bounded execution against a written brief | Sonnet |
-| Reviewer | **Luna** (`gpt-5.6-luna`) — bounded, gate-backed review of a small listed diff | Haiku |
+| Architect | **Sol** (`gpt-5.6-sol`) — orchestration, planning, judgment, deploy gate | Claude equivalent: Opus |
+| Builder | **Terra** (`gpt-5.6-terra`) — bounded execution against a written brief | Claude equivalent: Sonnet |
+| Reviewer | **Luna** (`gpt-5.6-luna`) — bounded, gate-backed review of a small listed diff | Claude equivalent: Haiku |
 
-Reasoning effort is the *within-tier* knob: keep the highest effort (`xhigh` / `max`, or Sol's
-`ultra` mode) for irreversible steps and load-bearing decisions, and run gate-backed routine work
-at the effort its tier already covers. Lives in `references/role-templates/ARCHITECT.md` (Context
-Budget + spawn instructions), `SKILL.md` (Job 2), and `references/token-optimization.md` (lever 2).
-
-**Routing caveat (real).** A Sol parent does **not** delegate to cheaper tiers by default — spawned
-sub-agents inherit the parent's model unless multi-agent routing is enabled (Codex issue #31814;
-set the `features.multi_agent_v2` routing fields, e.g. `hide_spawn_agent_metadata = false`, or use a
-per-role model override such as `review_model`). Without it the Terra / Luna spawns silently run as
-Sol and the routing saving is lost. Verify a spawned sub-agent's actual model once per environment.
-
-**Open item:** the exact per-sub-agent routing field is still settling in the Codex CLI. The tier
-*assignment* above is durable; if the override syntax changes, update the caveat, not the routing.
+Reasoning effort is the within-tier knob. Reserve Sol and the highest available effort for
+irreversible, security-sensitive, or architecturally load-bearing work. If the runtime rejects a
+requested model, retry without `model` and use the inherited/default model. This fallback is
+required; a named tier is a preference, never a reason to block the handoff workflow.
 
 ---
 
@@ -69,9 +45,8 @@ price. On a measured session those cold rewrites were ~$25 of a ~$156 CAD day.
 no effect under Codex, whose runtime manages caching itself. Presenting it as a Codex setup step
 would be false.
 
-**What the Codex skill does instead:** `references/token-optimization.md` (lever 3) documents it
-as a *Claude-Code-only* option ("if you run this team under Claude Code, set …; under Codex the
-runtime manages caching for you"). It is deliberately absent from any Codex setup / install step.
+**What the Codex skill does instead:** `references/token-optimization.md` states only the Codex
+fact: runtime caching is managed by Codex, so this skill provides no cache-TTL setup step.
 
 **Open item:** if Codex adds a user-facing cache-TTL control, add the analog here and in the token
 guidance. Until then, do not add a cache setup step to the Codex skill.
@@ -96,7 +71,7 @@ part of it ported to the Codex build, because none of it depends on a Claude-onl
 | `scripts/check-handoff.sh` | ported — `templates/project/scripts/`, byte-identical to the Claude copy |
 | RULES.md gate row + call-site table | ported — `templates/project/RULES.md` is in the identical-copy set |
 | Token Rules block → cost model + gotchas | ported — `SKILL.md` and `templates/project/AGENTS.md` |
-| token-optimizer de-duplication | ported — `references/token-optimization.md` is in the identical-copy set |
+| token-optimizer de-duplication | intentionally divergent — Codex keeps runtime-specific guidance; Claude copies remain identical to each other |
 | Pre-Flight eighth line | ported — `references/playbooks/PLANNING.md`, `references/role-templates/ARCHITECT.md` |
 | Builder/Reviewer call sites | ported — `references/role-templates/BUILDER.md`, `REVIEWER.md` |
 
@@ -120,4 +95,4 @@ two-line stubs. `check-handoff.sh` asserts a brief carries Decisions, Out of Sco
 Definition of Done with a runnable command; a stub gives the Architect nothing to fill in and
 the check nothing to find.
 
-**Open:** nothing. The two builds are at parity on v2.3.0.
+**Status:** methodology parity is preserved; runtime-specific instructions intentionally differ.

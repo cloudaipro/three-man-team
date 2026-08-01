@@ -309,10 +309,10 @@ Installed at `codex-skill/` in this repo:
 |---|---|---|
 | `SKILL.md` | `codex-skill/SKILL.md` | Trigger description + full methodology adapted for Codex's `spawn_agent` model |
 | **Playbooks** | `codex-skill/references/playbooks/` | PLANNING.md (Pre-Flight Check, step cutting), DIAGNOSIS.md (debugging protocol), BRIEF-EXAMPLES.md (annotated briefs) |
-| **Role templates** | `codex-skill/references/role-templates/` | ARCHITECT.md, BUILDER.md, REVIEWER.md — adapted for Codex's worker/default agent types |
-| **Token optimizer** | `codex-skill/references/token-optimization.md` | Five token-discipline rules + grep-before-read |
-| **Setup script** | `codex-skill/scripts/setup-project.sh` | Scaffolds AGENTS.md, role stubs, handoff templates into a project |
-| **Version checker** | `codex-skill/scripts/check-version.py` | Compares local manifest against bundled release registry (no network needed) |
+| **Role templates** | `codex-skill/references/role-templates/` | ARCHITECT.md, BUILDER.md, REVIEWER.md — full Codex role templates |
+| **Token optimizer** | `codex-skill/references/token-optimization.md` | Codex-specific context, routing, and handoff discipline |
+| **Setup script** | `codex-skill/scripts/setup-project.sh` | Scaffolds AGENTS.md, full role templates, and handoff templates into a project |
+| **Version checker** | `codex-skill/scripts/check-version.py` | Offline update walk plus explicit acknowledgement against bundled release files |
 | **Project templates** | `codex-skill/templates/project/` | AGENTS.md (session router), manifest.md (version tracking) |
 
 ### Key adaptations for Codex
@@ -320,8 +320,8 @@ Installed at `codex-skill/` in this repo:
 | Dimension | Claude Code TMT | Codex TMT Skill |
 |---|---|---|
 | **Session boot** | Slash commands (`/architect`) | Skill triggers on structured work keywords |
-| **Builder spawn** | Claude Code Agent tool | `spawn_agent(agent_type: "worker")` |
-| **Reviewer spawn** | Claude Code Agent tool | `spawn_agent(agent_type: "default")` |
+| **Builder spawn** | Claude Code Agent tool | `spawn_agent` with preferred Terra model, falling back to runtime default |
+| **Reviewer spawn** | Claude Code Agent tool | `spawn_agent` with preferred Luna model, falling back to runtime default |
 | **Session router** | CLAUDE.md | AGENTS.md |
 | **Version check** | curl to GitHub API | `check-version.py` (local, sandbox-safe) |
 | **Playbook paths** | `playbooks/` | `references/playbooks/` (inside skill dir) |
@@ -331,7 +331,7 @@ Installed at `codex-skill/` in this repo:
 The skill is pre-installed in this repo. To use it in your Codex environment:
 
 ```bash
-# Copy the skill into your Codex skills directory
+# Copy the standalone skill into your Codex skills directory
 cp -R codex-skill ~/.codex/skills/three-man-team
 ```
 
@@ -346,7 +346,7 @@ Restart Codex to pick up the new skill. It will trigger automatically when your 
 The setup script scaffolds project files and optionally registers the Codex plugin:
 
 ```bash
-# Project files only (AGENTS.md, role stubs, handoff templates)
+# Project files only (AGENTS.md, full role templates, handoff templates)
 ~/.codex/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 
 # Project files + @three-man-team Codex plugin
@@ -356,13 +356,13 @@ The setup script scaffolds project files and optionally registers the Codex plug
 ~/.codex/skills/three-man-team/scripts/setup-project.sh --plugin-only
 ```
 
-Project files: `AGENTS.md` (session router), role stubs, and a full set of `handoff/` templates. Customize the role files with your team's names and personas.
+Project files: `AGENTS.md` (session router), full role templates, and a full set of `handoff/` templates. Customize the role files with your team's names and personas.
 
-The `--plugin` flag installs a Codex plugin at `~/.agents/plugins/plugins/three-man-team/` with an App definition, enabling `@three-man-team` mention in any Codex CLI session. The `--plugin-only` flag skips project files and only registers the plugin — useful if your project is already set up.
+The `--plugin` flag stages a skills-only plugin at `~/plugins/three-man-team/`, registers it in the personal marketplace at `~/.agents/plugins/marketplace.json`, then runs `codex plugin add`. On a replacement install it applies a Codex build-metadata cachebuster before reinstalling, so the CLI cannot reuse stale skill content. It reports failure if Codex cannot install it. The `--plugin-only` flag skips project files and performs that same plugin workflow. A legacy payload under `~/.agents/plugins/plugins/three-man-team/` is left untouched because Codex resolves `./plugins/three-man-team` to `~/plugins/three-man-team/`.
 
 ### How to trigger in Codex CLI
 
-**`@three-man-team` mention** — the fastest way. Installed as a Codex plugin with App definition:
+**`@three-man-team` mention** — available after the skills-only plugin has staged and `codex plugin add` succeeds:
 
 ```
 @three-man-team I need to build a login feature, plan it out
@@ -383,7 +383,7 @@ You describe a problem
   → Architect (you) loads playbooks, writes brief to handoff/ARCHITECT-BRIEF.md
   → Spawn Builder: implement Step N, update BUILD-LOG, write REVIEW-REQUEST
   → Spawn Reviewer: read REVIEW-REQUEST, review the diff, write REVIEW-FEEDBACK
-  → Deploy gate: report, commit, log, write SESSION-CHECKPOINT
+  → Deploy gate: report, commit, push/deploy, confirm, log, write SESSION-CHECKPOINT
 ```
 
 Every step follows the same disciplined path — the skill delivers the methodology, Codex provides the agent infrastructure.

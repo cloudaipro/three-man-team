@@ -1,6 +1,6 @@
 {
   "name": "three-man-team",
-  "version": "1.0.0",
+  "version": "2.3.1",
   "description": "Structured software development with Architect, Builder, and Reviewer roles — plan, build, review, deploy with playbook-driven discipline.",
   "author": {
     "name": "Three Man Team",
@@ -9,8 +9,8 @@
   "homepage": "https://github.com/cloudaipro/three-man-team",
   "repository": "https://github.com/cloudaipro/three-man-team",
   "license": "MIT",
+  "keywords": ["software-development", "planning", "code-review", "multi-agent"],
   "skills": "./skills/",
-  "apps": "./.app.json",
   "interface": {
     "displayName": "Three Man Team",
     "shortDescription": "Architect → Builder → Reviewer workflow for structured coding",
@@ -20,10 +20,9 @@
     "capabilities": ["Read", "Write"],
     "websiteURL": "https://github.com/cloudaipro/three-man-team",
     "defaultPrompt": [
-      "I need to plan and build a feature with Three Man Team — Architect, Builder, Reviewer",
-      "Use the Three Man Team methodology for this task",
-      "I want to start a TMT session — write a brief, spin up Builder and Reviewer",
-      "Help me diagnose a bug using the TMT playbook"
+      "Plan and build a feature with the Three Man Team workflow.",
+      "Use the Three Man Team methodology to review this change.",
+      "Diagnose a bug with the Three Man Team playbook."
     ],
     "brandColor": "#2563EB"
   }

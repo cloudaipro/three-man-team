@@ -1,0 +1,19 @@
+{
+  "version": "1.2.3",
+  "released": "2026-05-03",
+  "from_version": "1.2.2",
+  "changes": [
+    {
+      "affected_files": [],
+      "what_changed": "Auto-update check introduced. Arch now detects newer versions at session start.",
+      "old_behavior": "No version awareness. Users had no way to know a newer version existed.",
+      "new_behavior": "Arch checks GitHub releases API at session start and notifies the Project Owner if a newer version is available.",
+      "user_impact": "No migration required. VERSION file must be present for future checks to work.",
+      "user_impact_plain": "Nothing breaks. From this version forward, Arch will let you know when updates are available.",
+      "migration_required": false,
+      "migration_steps": [],
+      "breaking": false
+    }
+  ],
+  "arch_opening": "I see version {version} of Three Man Team is available. Before we get into today's work, I want to walk you through what changed and what — if anything — you need to do. This will take a few minutes and I will go at whatever pace works for you."
+}

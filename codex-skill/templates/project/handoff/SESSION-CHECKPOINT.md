@@ -23,7 +23,7 @@
 
 ## Resume Prompt
 
-Type `/architect` to resume. Manual fallback — copy and paste:
+Start a new Codex session in this project and invoke the Three Man Team skill. Manual fallback — copy and paste:
 
 ---
 

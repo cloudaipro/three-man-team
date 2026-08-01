@@ -36,6 +36,21 @@ else
   ok "codex-skill bundled registry matches releases/latest.json"
 fi
 
+# An update walk needs the detailed release files, not only the registry. The
+# plugin and standalone Codex skill work offline, so every registry release
+# must be bundled with its matching JSON document.
+CODEX_RELEASES_OK=1
+for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); do
+  if [ ! -f "codex-skill/releases/$v.json" ]; then
+    problem "codex-skill/releases/$v.json is missing — Codex cannot walk that bundled update"
+    CODEX_RELEASES_OK=0
+  elif ! cmp -s "releases/$v.json" "codex-skill/releases/$v.json"; then
+    problem "codex-skill/releases/$v.json differs from releases/$v.json"
+    CODEX_RELEASES_OK=0
+  fi
+done
+[ "$CODEX_RELEASES_OK" = 1 ] && ok "Codex bundles every detailed release file"
+
 # The Codex project manifest template carries the version a fresh install is
 # stamped with. It drifted to v1.5.0 across four releases because nothing
 # installed it and nothing checked it — assert it here so that cannot recur.
@@ -189,8 +204,8 @@ ARCHITECT-BRIEF.md:templates/project-folder/handoff/ARCHITECT-BRIEF.md templates
 BUILD-LOG.md:templates/project-folder/handoff/BUILD-LOG.md templates/generic/handoff/BUILD-LOG.md codex-skill/templates/project/handoff/BUILD-LOG.md
 REVIEW-REQUEST.md:templates/project-folder/handoff/REVIEW-REQUEST.md templates/generic/handoff/REVIEW-REQUEST.md codex-skill/templates/project/handoff/REVIEW-REQUEST.md
 REVIEW-FEEDBACK.md:templates/project-folder/handoff/REVIEW-FEEDBACK.md templates/generic/handoff/REVIEW-FEEDBACK.md codex-skill/templates/project/handoff/REVIEW-FEEDBACK.md
-SESSION-CHECKPOINT.md:templates/project-folder/handoff/SESSION-CHECKPOINT.md templates/generic/handoff/SESSION-CHECKPOINT.md codex-skill/templates/project/handoff/SESSION-CHECKPOINT.md
-token-optimization.md:docs/token-optimization.md templates/project-folder/.claude/skills/token-optimization.md codex-skill/references/token-optimization.md
+SESSION-CHECKPOINT.md:templates/project-folder/handoff/SESSION-CHECKPOINT.md templates/generic/handoff/SESSION-CHECKPOINT.md
+token-optimization.md:docs/token-optimization.md templates/project-folder/.claude/skills/token-optimization.md
 PLANNING.md:templates/project-folder/playbooks/PLANNING.md templates/generic/playbooks/PLANNING.md codex-skill/references/playbooks/PLANNING.md
 DIAGNOSIS.md:templates/project-folder/playbooks/DIAGNOSIS.md templates/generic/playbooks/DIAGNOSIS.md codex-skill/references/playbooks/DIAGNOSIS.md
 BRIEF-EXAMPLES.md:templates/project-folder/playbooks/BRIEF-EXAMPLES.md templates/generic/playbooks/BRIEF-EXAMPLES.md codex-skill/references/playbooks/BRIEF-EXAMPLES.md
@@ -218,6 +233,78 @@ while IFS= read -r line; do
   done
 done <<< "$IDENTICAL_SETS"
 [ "$IDENTICAL_OK" = 1 ] && ok "role-neutral copies are byte-identical across their locations"
+
+echo ""
+echo "— Codex-specific contracts"
+
+# The Claude copies intentionally retain Claude setup guidance. The Codex copy
+# must instead describe only Codex runtime behavior; byte identity here would
+# reintroduce the exact cross-platform drift this check is meant to prevent.
+CODEX_TOKEN="codex-skill/references/token-optimization.md"
+if grep -qE 'ENABLE_PROMPT_CACHING_1H|~/.claude|\bopus\b|\bsonnet\b|\bhaiku\b' "$CODEX_TOKEN"; then
+  problem "$CODEX_TOKEN contains active Claude-only configuration or routing guidance"
+else
+  ok "Codex token guidance is runtime-specific"
+fi
+
+for f in codex-skill/SKILL.md codex-skill/references/role-templates/ARCHITECT.md codex-skill/templates/project/AGENTS.md; do
+  if ! grep -q 'check-version.py' "$f"; then
+    problem "$f does not wire the Codex version check into session start"
+  fi
+done
+if grep -q 'agent_type' codex-skill/SKILL.md README.md; then
+  problem "active Codex instructions still use unsupported agent_type routing"
+else
+  ok "Codex spawn documentation uses current arguments"
+fi
+
+if grep -q 'features\.multi_agent_v2' codex-skill/PORTING-NOTES.md; then
+  problem "PORTING-NOTES.md retains obsolete multi-agent routing configuration"
+else
+  ok "Codex routing notes use capability-aware fallback"
+fi
+
+if grep -q 'Type `/architect`' codex-skill/templates/project/handoff/SESSION-CHECKPOINT.md; then
+  problem "Codex checkpoint template contains a Claude slash-command resume instruction"
+else
+  ok "Codex checkpoint resume instruction is native"
+fi
+
+PLUGIN_MANIFEST="codex-skill/templates/plugin/.codex-plugin/plugin.json"
+PLUGIN_CONTRACT="scripts/check-codex-plugin.py"
+if [ ! -f "$PLUGIN_MANIFEST" ]; then
+  problem "$PLUGIN_MANIFEST is missing"
+elif [ -f "codex-skill/templates/plugin/.app.json" ]; then
+  problem "Codex skills-only plugin still ships .app.json"
+elif ! python3 "$PLUGIN_CONTRACT" "$PLUGIN_MANIFEST" "$LATEST_V"
+then
+  problem "Codex plugin manifest violates its release-bound skills-only contract"
+else
+  ok "Codex plugin template matches the latest release and skills-only contract"
+fi
+
+for obsolete in three-man-team/.app.json three-man-team/.codex-plugin/plugin.json; do
+  if [ -e "$obsolete" ]; then
+    problem "obsolete root plugin artifact remains: $obsolete"
+  fi
+done
+
+CODEX_SETUP="codex-skill/scripts/setup-project.sh"
+for needle in 'local plugin_root="${TMT_PLUGIN_ROOT:-$HOME/plugins}"' 'skills/three-man-team/SKILL.md' 'plugin add' 'TMT_SKIP_PLUGIN_ADD' 'references/role-templates/${role}.md'; do
+  if ! grep -Fq "$needle" "$CODEX_SETUP"; then
+    problem "$CODEX_SETUP is missing required plugin/project setup behavior: $needle"
+  fi
+done
+for f in codex-skill/SKILL.md codex-skill/references/role-templates/ARCHITECT.md; do
+  for needle in 'fork_turns: "none"' 'references/role-templates/BUILDER.md' 'references/role-templates/REVIEWER.md' 'builder_step_${step}_attempt_${attempt}' 'reviewer_step_${step}_attempt_${attempt}'; do
+    if ! grep -Fq "$needle" "$f"; then
+      problem "$f is missing fresh-agent spawn contract: $needle"
+    fi
+  done
+  if grep -Fq 'builder-step-${step}-attempt-${attempt}' "$f" || grep -Fq 'reviewer-step-${step}-attempt-${attempt}' "$f"; then
+    problem "$f contains a hyphenated task_name that violates the spawn_agent schema"
+  fi
+done
 
 echo ""
 echo "— Upgrade tool sources"

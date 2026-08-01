@@ -1,0 +1,63 @@
+{
+  "version": "v1.9.0",
+  "released": "2026-07-19",
+  "from_version": "v1.8.0",
+  "arch_opening": "There is an update available — version 1.9.0. The theme is 'the writer never held the rule': v1.8.0 told the Architect to rotate BUILD-LOG, but the Builder writes it, and a Builder subagent starts with fresh context that never contains the Architect's rules. On a real project the log hit 1185 lines before anyone noticed. This release makes the size check mechanical, gives the Builder a length budget, and fixes rotation to aim at a target instead of moving the oldest entry. I'll look at your files and walk you through exactly what applies.",
+  "changes": [
+    {
+      "id": "handoff-size-gate-row",
+      "type": "feature",
+      "title": "BUILD-LOG size is checked by the Mechanical Gate, not by noticing",
+      "what_changed": "RULES.md ships with one pre-filled Mechanical Gate row: `awk 'END{exit (NR>400)}' handoff/BUILD-LOG.md`. It is the only gate command the framework provides — every other row is drafted from the project's own tooling.",
+      "old_behavior": "v1.8.0's rotation rule triggered on 'the file passes ~300 lines', which required the Architect to decide to run wc -l. Nothing computed it. On the project this was measured against, rotation fired once, opportunistically, while the Architect was idle waiting for the Reviewer — at 1185 lines, self-described as 'overdue since last session'.",
+      "new_behavior": "The Builder runs the gate before every review request, so the size ceiling is enforced once per step. Failing the row is not a code defect — the Builder signals the Architect, who rotates.",
+      "user_impact_plain": "The handoff log can drift by at most one step instead of a whole session, and nobody has to remember to check.",
+      "how_to_assess": "Read the project's RULES.md Mechanical Gate table. If it has no handoff-size row, offer to add it above the project's own checks. If the project has no RULES.md at all, that is a v1.7.0 change that never landed — install it first (templates/project-folder/RULES.md, or the clone's ./upgrade).",
+      "user_decision": "Want me to add the handoff-size row to your Mechanical Gate? It adds one command to what the Builder already runs."
+    },
+    {
+      "id": "builder-entry-budget",
+      "type": "improvement",
+      "title": "Builder gets a BUILD-LOG entry budget",
+      "what_changed": "BUILDER.md 'When You Are Done' now sets a 60-line target for the BUILD-LOG step entry and says explicitly that proof transcripts, command output, curl dumps, and gate evidence belong in REVIEW-REQUEST.md.",
+      "old_behavior": "BUILDER.md said only 'Update handoff/BUILD-LOG.md — step status, files changed, key decisions', with no length guidance. Measured entries ran 150-207 lines each.",
+      "new_behavior": "Step entries stay near 60 lines; the evidence still exists, in the file built to hold it.",
+      "user_impact_plain": "This is the source of the growth, not the cleanup. At ~180 lines per step against a 300-line threshold, no rotation cadence can keep up; at 60 the threshold holds for several steps.",
+      "how_to_assess": "Read the user's Builder role file (name from manifest.md). If its done-step lacks the length budget, offer the same edit the v1.9.0 template carries, preserving their team names and personas. Also skim their BUILD-LOG: entries far over 60 lines are the backlog this prevents, not something to rewrite retroactively.",
+      "user_decision": "Want me to add the entry budget to your Builder file? Existing log entries stay as they are — this only shapes new ones."
+    },
+    {
+      "id": "rotate-to-target",
+      "type": "improvement",
+      "title": "Rotate to a target, not by age",
+      "what_changed": "The Architect's Anti-Drift rotation rule now says: keep moving entries out until BUILD-LOG is under 200 lines. It also drops the '~300 lines' perceptual trigger in favor of the gate row, and adds a write-once rule — a Known Gap is written once in the Known Gaps section and referenced by id from step entries, never restated.",
+      "old_behavior": "The rule said what to move (completed steps, closed gaps, full Lesson text) but not how far down to get. A correctly executed rotation on the measured project moved the oldest steps and finished at 385 lines — over threshold on completion — then regrew to 752 within twelve hours.",
+      "new_behavior": "Rotation aims at a number, so the file has headroom for the next few steps instead of sitting at the line.",
+      "user_impact_plain": "Stops the 'we just rotated and it's already overdue' cycle.",
+      "how_to_assess": "Read the user's Architect role file Anti-Drift section. If its rotation bullet has no target line count, offer the v1.9.0 wording. If their BUILD-LOG is currently over 400 lines, offer to run the rotation now — it is a move into handoff/archive/BUILD-LOG-<YYYY-MM>.md, never a delete; verify the moved text is byte-identical in the archive before removing it from the log.",
+      "user_decision": "Want me to update the rotation rule, and rotate your BUILD-LOG now if it is over the line?"
+    },
+    {
+      "id": "gate-command-shell-portability",
+      "type": "fix",
+      "title": "The gate row uses awk, not wc, on purpose",
+      "what_changed": "The shipped size check is written `awk 'END{exit (NR>400)}' handoff/BUILD-LOG.md` rather than `test \"$(wc -l < handoff/BUILD-LOG.md)\" -le 400`.",
+      "old_behavior": "The wc form was the obvious way to write it. Tested against a missing BUILD-LOG it exits 2 under bash and sh, but 0 under zsh — the empty command substitution compares as an integer — reporting a green gate for a handoff log that is not there.",
+      "new_behavior": "The awk form exits non-zero for oversized, missing, and unreadable alike, in bash, zsh, and sh.",
+      "user_impact_plain": "A check that reports green when its subject is absent is worse than no check. This is L-1's own rule — run every gate command in the failure environment before trusting it — applied to the framework's own gate command.",
+      "how_to_assess": "If the project already added a handoff-size row by hand using wc, offer to swap it for the awk form and say why. The reasoning is written into RULES.md so it does not get 'simplified' back.",
+      "user_decision": "Nothing to decide unless you already hand-rolled this check — then I'd swap it."
+    },
+    {
+      "id": "codex-manifest-install",
+      "type": "fix",
+      "title": "Codex installs get a manifest.md — the version check never worked without one",
+      "what_changed": "setup-project.sh now installs manifest.md, stamping the version from the bundled releases registry at install time rather than from the template's own text. check-consistency.sh asserts the template's version matches the registry latest.",
+      "old_behavior": "setup-project.sh scaffolded AGENTS.md, role stubs, RULES.md and the handoff files but never installed manifest.md. check-version.py therefore printed 'Current version: unknown (no manifest.md)' followed by 'Run setup-project.sh to create a manifest' — the script that does not create it. The template that should have been installed had drifted to v1.5.0 across four releases, unnoticed, because nothing consumed it.",
+      "new_behavior": "A fresh Codex install carries a manifest stamped with the version it was installed from, and the offline version check reports correctly.",
+      "user_impact_plain": "Codex projects can tell what version they are on. Previously they could not, which also meant they never learned about critical updates.",
+      "how_to_assess": "This only affects Codex installs. Check whether the project root has a manifest.md. If not, the project was scaffolded by an older setup-project.sh — offer to create one, stamped with the version the project actually corresponds to (ask; do not guess from the latest registry entry, since the project may be several versions behind).",
+      "user_decision": "Codex projects only: want me to add the missing manifest.md so version checks start working?"
+    }
+  ]
+}

@@ -45,13 +45,14 @@ What the codex upgrade does:
   - re-runs the skill's setup-project.sh on your project, which only ADDS
     files introduced since your install (e.g. RULES.md) — existing files,
     role stubs, and handoff data are never overwritten
+  - refreshes the personal skills-only plugin too when it is already present,
+    then re-runs codex plugin add; a failed Codex install is reported as a failure
 
 Both paths:
   - back up everything they edit
   - NEVER touch your live handoff data, personas, or team names
-  - deliberately leave your version markers alone: your next session's
-    version check sees the new version and walks the remaining role-file
-    upgrades with you, preserving customizations
+  - deliberately leave version_notified alone: the next Codex session walks
+    project-specific release changes before it acknowledges them
 USAGE
 }
 
@@ -129,6 +130,8 @@ if [ "$CLI" = "codex" ]; then
     echo "✗ This clone has no codex-skill/ directory. Run: git -C $SCRIPT_DIR pull"; exit 1; }
 
   SKILL_DEST="${CODEX_HOME:-$HOME/.codex}/skills/three-man-team"
+  PLUGIN_DEST="${TMT_PLUGIN_ROOT:-$HOME/plugins}/three-man-team"
+  LEGACY_PLUGIN_DEST="${TMT_MARKETPLACE_DIR:-$HOME/.agents/plugins}/plugins/three-man-team"
 
   if [ ! -f "$PROJECT/AGENTS.md" ] && [ ! -d "$PROJECT/handoff" ]; then
     echo "✗ No Three Man Team (Codex) install found at: $PROJECT"
@@ -181,11 +184,33 @@ if [ "$CLI" = "codex" ]; then
     plan "run the skill's setup-project.sh — adds only files your project is missing (e.g. RULES.md)"
   fi
 
+  if [ -d "$PLUGIN_DEST" ]; then
+    echo ""
+    echo "— Refreshing registered Codex plugin"
+    if [ "$DRY" = 0 ]; then
+      if OUT="$("$SKILL_SRC/scripts/setup-project.sh" --plugin-only 2>&1)"; then
+        echo "$OUT" | grep -E 'Staged plugin|Plugin installed|Codex plugin:' || say "plugin refreshed"
+      else
+        echo "$OUT"
+        echo "✗ Plugin refresh failed — Codex did not confirm plugin installation."
+        exit 1
+      fi
+    else
+      plan "refresh registered skills-only plugin and run codex plugin add"
+    fi
+  else
+    say "No registered personal plugin found — standalone skill refresh is complete."
+    if [ -d "$LEGACY_PLUGIN_DEST" ]; then
+      say "Legacy plugin payload found at $LEGACY_PLUGIN_DEST (not modified)."
+      say "It predates the resolved personal marketplace source at $PLUGIN_DEST."
+    fi
+  fi
+
   echo ""
-  echo "— Version markers: left untouched"
-  say "Your manifest.md version was deliberately NOT updated. In your next Codex"
-  say "session, the skill's check-version.py compares it against the refreshed"
-  say "bundled registry ($LATEST) and the Architect walks the changes with you."
+  echo "— Version acknowledgement: pending"
+  say "Your manifest.md and version_notified marker were deliberately left untouched."
+  say "In the next Codex session, check-version.py walks bundled release details before"
+  say "the Architect acknowledges $LATEST for this project."
 
   echo ""
   echo "========================================="

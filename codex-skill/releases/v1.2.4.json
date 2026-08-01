@@ -1,0 +1,40 @@
+{
+  "version": "1.2.4",
+  "released": "2026-05-27",
+  "from_version": "1.2.3",
+  "changes": [
+    {
+      "affected_files": ["ARCHITECT.md"],
+      "what_changed": "Version check now uses an explicit curl command to extract the remote tag instead of vague natural language instruction.",
+      "old_behavior": "Instruction said 'fetch... extract tag_name' without specifying how. Claude guessed a parsing method that silently failed, causing the version check to always resolve to empty and report a false network error.",
+      "new_behavior": "Arch runs curl piped to jq as the primary extraction method, with a grep/cut fallback for systems without jq. Both commands verified against the live API.",
+      "user_impact": "Existing installs must update the version check line in ARCHITECT.md manually — the fix is one line. New installs get it automatically.",
+      "user_impact_plain": "The version check was silently broken for everyone. This fixes it. If you installed before today, you need to update one line in your ARCHITECT.md.",
+      "migration_required": true,
+      "migration_steps": [
+        "Open ARCHITECT.md in your project root.",
+        "Find the Version check step in Session Start. It will contain the phrase 'Fetch latest release tag from'.",
+        "Replace that phrase and everything after it up to 'If tag_name matches' with: Run `curl -s https://api.github.com/repos/russelleNVy/three-man-team/releases/latest | jq -r '.tag_name' 2>/dev/null` to get the remote tag. If jq is unavailable, fall back to `curl -s https://api.github.com/repos/russelleNVy/three-man-team/releases/latest | grep -o '\"tag_name\": *\"[^\"]*\"' | cut -d'\"' -f4`.",
+        "Save the file. The version check will work correctly on the next session start."
+      ],
+      "breaking": false
+    },
+    {
+      "affected_files": ["ARCHITECT.md"],
+      "what_changed": "Fixed typo in Bob spinup prompt — 'BOB.md' corrected to 'BUILDER.md'.",
+      "old_behavior": "Arch's spinup prompt told Bob to read BOB.md, which does not exist. Bob would fail to load his role file.",
+      "new_behavior": "Spinup prompt correctly references BUILDER.md.",
+      "user_impact": "Existing installs must update the Bob spinup line in ARCHITECT.md. Find 'Then read BOB.md' and change it to 'Then read BUILDER.md'.",
+      "user_impact_plain": "There was a typo in the instructions Arch gives Bob when spinning him up. Bob was told to read a file that doesn't exist. Easy one-word fix in your ARCHITECT.md.",
+      "migration_required": true,
+      "migration_steps": [
+        "Open ARCHITECT.md in your project root.",
+        "Find the Briefing Bob section. Look for the line: 'Then read BOB.md, then handoff/ARCHITECT-BRIEF.md.'",
+        "Change BOB.md to BUILDER.md.",
+        "Save the file."
+      ],
+      "breaking": false
+    }
+  ],
+  "arch_opening": "I see version {version} of Three Man Team is available. Two bug fixes — one of them has been silently breaking the version check since v1.2.3, and the other is a typo in how I spin up Bob. Both are quick to fix. Want me to walk you through it?"
+}

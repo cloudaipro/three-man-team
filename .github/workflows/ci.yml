@@ -34,6 +34,9 @@ jobs:
             jq empty "$f" || { echo "invalid JSON: $f"; exit 1; }
           done
 
+      - name: Codex version checker regression tests
+        run: python3 -m unittest discover -s codex-skill/tests -v
+
       - name: Repo self-audit
         env:
           GH_TOKEN: ${{ github.token }}

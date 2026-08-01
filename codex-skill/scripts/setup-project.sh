@@ -1,7 +1,7 @@
 #!/bin/bash
 # Three Man Team — Codex project setup
-# Scaffolds handoff templates, role file stubs, AGENTS.md into a project directory,
-# and optionally registers the @three-man-team Codex plugin.
+# Scaffolds handoff templates, full role templates, AGENTS.md into a project directory,
+# and optionally stages and installs the @three-man-team Codex plugin.
 #
 # Usage:
 #   ./setup-project.sh /path/to/your/project             # project files only
@@ -14,6 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TPL="$SCRIPT_DIR/templates"
 DEST="${1:-}"
 MODE="project"
+PLUGIN_STATUS="not requested"
 
 # --- arg parsing ---
 for arg in "$@"; do
@@ -32,84 +33,142 @@ done
 
 # --- plugin install ---
 install_plugin() {
-  local marketplace_dir="$HOME/.agents/plugins"
-  local plugin_dir="$marketplace_dir/plugins/three-man-team"
+  local marketplace_dir="${TMT_MARKETPLACE_DIR:-$HOME/.agents/plugins}"
+  # Codex resolves ./plugins/three-man-team in the personal marketplace to
+  # $HOME/plugins/three-man-team, not relative to marketplace.json. Keep the
+  # metadata directory and source root separate; both variables are injectable
+  # so tests never write to a live marketplace or plugin source.
+  local plugin_root="${TMT_PLUGIN_ROOT:-$HOME/plugins}"
+  local plugin_dir="$plugin_root/three-man-team"
+  local legacy_plugin_dir="$marketplace_dir/plugins/three-man-team"
+  local staged_dir="$plugin_dir.staging-$$"
+  local backup_dir=""
+  local replacing=0
+  local cachebuster=""
+  local marketplace
+  local marketplace_name
 
   echo ""
   echo "--- Codex Plugin ---"
 
-  # Create directory structure
-  mkdir -p "$plugin_dir/.codex-plugin"
-  mkdir -p "$plugin_dir/skills"
+  if [ -d "$legacy_plugin_dir" ] && [ "$legacy_plugin_dir" != "$plugin_dir" ]; then
+    echo "  ⚠ Legacy plugin payload remains at $legacy_plugin_dir (not modified)."
+    echo "    Codex uses $plugin_dir for ./plugins/three-man-team."
+  fi
+  [ -d "$plugin_dir" ] && replacing=1
 
-  # Copy plugin manifest and app definition
-  cp "$TPL/plugin/.codex-plugin/plugin.json" "$plugin_dir/.codex-plugin/plugin.json"
-  cp "$TPL/plugin/.app.json" "$plugin_dir/.app.json"
+  # A skill must be a directory below skills/, not a loose SKILL.md. Stage a
+  # complete replacement before swapping it into place so a failed copy never
+  # leaves the marketplace pointing at a half-built plugin.
+  rm -rf "$staged_dir"
+  mkdir -p "$staged_dir/.codex-plugin" "$staged_dir/skills/three-man-team"
+  cp "$TPL/plugin/.codex-plugin/plugin.json" "$staged_dir/.codex-plugin/plugin.json"
+  cp "$SCRIPT_DIR/SKILL.md" "$staged_dir/skills/three-man-team/SKILL.md"
+  for source_dir in agents references releases scripts templates; do
+    cp -R "$SCRIPT_DIR/$source_dir" "$staged_dir/skills/three-man-team/$source_dir"
+  done
 
-  # Copy the full skill contents into the plugin's skills/ directory
-  cp -R "$SCRIPT_DIR/SKILL.md" "$plugin_dir/skills/"
-  cp -R "$SCRIPT_DIR/agents" "$plugin_dir/skills/" 2>/dev/null
-  cp -R "$SCRIPT_DIR/references" "$plugin_dir/skills/" 2>/dev/null
-  cp -R "$SCRIPT_DIR/releases" "$plugin_dir/skills/" 2>/dev/null
-  cp -R "$SCRIPT_DIR/scripts" "$plugin_dir/skills/" 2>/dev/null
-  cp -R "$SCRIPT_DIR/templates" "$plugin_dir/skills/" 2>/dev/null
+  # A replacement install receives a Codex build-metadata cachebuster before
+  # `codex plugin add`, following the documented update/reinstall policy. New
+  # installs keep the release version exactly; tests may supply a stable suffix.
+  if [ "$replacing" = 1 ]; then
+    cachebuster="${TMT_PLUGIN_CACHEBUSTER:-local-$(date -u +%Y%m%d-%H%M%S)}"
+    if ! python3 - "$staged_dir/.codex-plugin/plugin.json" "$cachebuster" <<'PY'
+import json
+import sys
+
+path, cachebuster = sys.argv[1:]
+with open(path, encoding="utf-8") as handle:
+    manifest = json.load(handle)
+base_version = manifest["version"].split("+", 1)[0]
+manifest["version"] = base_version + "+codex." + cachebuster
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump(manifest, handle, indent=2)
+    handle.write("\n")
+PY
+    then
+      echo "  ✗ Could not apply plugin cachebuster during replacement staging"
+      rm -rf "$staged_dir"
+      return 1
+    fi
+  fi
+
+  if [ -d "$plugin_dir" ]; then
+    backup_dir="$plugin_dir.backup-$(date +%Y%m%d-%H%M%S)"
+    mv "$plugin_dir" "$backup_dir" || {
+      echo "  ✗ Could not back up existing plugin at $plugin_dir"
+      rm -rf "$staged_dir"
+      return 1
+    }
+  fi
+  mv "$staged_dir" "$plugin_dir" || {
+    echo "  ✗ Could not stage plugin at $plugin_dir"
+    [ -n "$backup_dir" ] && mv "$backup_dir" "$plugin_dir"
+    return 1
+  }
 
   # Create or update marketplace entry
   mkdir -p "$marketplace_dir"
-  local marketplace="$marketplace_dir/marketplace.json"
+  marketplace="$marketplace_dir/marketplace.json"
+  if ! python3 - "$marketplace" <<'PY'
+import json
+import os
+import sys
 
-  if [ -f "$marketplace" ]; then
-    # Update existing entry or append
-    python3 -c "
-import json, sys
-path = '$marketplace'
-with open(path) as f:
-    d = json.load(f)
+path = sys.argv[1]
 entry = {
-    'name': 'three-man-team',
-    'source': {'source': 'local', 'path': './plugins/three-man-team'},
-    'policy': {'installation': 'AVAILABLE', 'authentication': 'ON_INSTALL'},
-    'category': 'Productivity'
+    "name": "three-man-team",
+    "source": {"source": "local", "path": "./plugins/three-man-team"},
+    "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+    "category": "Productivity",
 }
-plugins = d.get('plugins', [])
-existing = [i for i, p in enumerate(plugins) if p.get('name') == 'three-man-team']
-if existing:
-    plugins[existing[0]] = entry
+if os.path.exists(path):
+    with open(path, encoding="utf-8") as handle:
+        marketplace = json.load(handle)
+else:
+    marketplace = {"name": "personal", "interface": {"displayName": "Personal"}, "plugins": []}
+marketplace.setdefault("interface", {}).setdefault("displayName", "Personal")
+plugins = marketplace.setdefault("plugins", [])
+for index, plugin in enumerate(plugins):
+    if plugin.get("name") == "three-man-team":
+        plugins[index] = entry
+        break
 else:
     plugins.append(entry)
-d['plugins'] = plugins
-with open(path, 'w') as f:
-    json.dump(d, f, indent=2)
-print('✓ Updated marketplace entry')
-" 2>/dev/null || echo "  ⚠ Could not update marketplace entry"
-  else
-    cat > "$marketplace" << 'MARKETPLACE_EOF'
-{
-  "name": "personal",
-  "interface": {
-    "displayName": "Personal"
-  },
-  "plugins": [
-    {
-      "name": "three-man-team",
-      "source": {
-        "source": "local",
-        "path": "./plugins/three-man-team"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Productivity"
-    }
-  ]
-}
-MARKETPLACE_EOF
-    echo "  ✓ Created marketplace at $marketplace"
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump(marketplace, handle, indent=2)
+    handle.write("\n")
+print(marketplace["name"])
+PY
+  then
+    echo "  ✗ Could not update marketplace entry at $marketplace"
+    return 1
+  fi
+  marketplace_name="$(python3 - "$marketplace" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as handle:
+    print(json.load(handle)["name"])
+PY
+)" || return 1
+
+  echo "  ✓ Staged plugin at $plugin_dir"
+  [ "$replacing" = 1 ] && echo "  ✓ Applied plugin cachebuster: $cachebuster"
+  echo "  ✓ Updated marketplace entry at $marketplace"
+  if [ "${TMT_SKIP_PLUGIN_ADD:-0}" = "1" ]; then
+    PLUGIN_STATUS="staged only (plugin add skipped by TMT_SKIP_PLUGIN_ADD=1)"
+    echo "  ✓ Plugin staged; Codex install intentionally skipped for test mode"
+    return 0
   fi
 
-  echo "  ✓ Plugin installed at $plugin_dir"
-  echo "  ✓ Use @three-man-team in Codex CLI to trigger the skill"
+  if "${TMT_CODEX_BIN:-codex}" plugin add "three-man-team@$marketplace_name"; then
+    PLUGIN_STATUS="installed"
+    echo "  ✓ Plugin installed in Codex — use @three-man-team to trigger the skill"
+  else
+    PLUGIN_STATUS="staged but not installed"
+    echo "  ✗ Codex plugin add failed; plugin was staged but is not installed."
+    return 1
+  fi
 }
 
 # --- project scaffolding ---
@@ -153,32 +212,24 @@ About to restate what user said → Delete it.
 ## Session Start (for Architect)
 
 1. Load the Three Man Team skill if available.
-2. Check `handoff/SESSION-CHECKPOINT.md` — if active and recent, read it.
-3. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`.
-4. Read `ARCHITECT.md`.
-5. Report status to the Product Owner in one paragraph.
+2. Run `python3 <skill-dir>/scripts/check-version.py .`; walk listed bundled releases before acknowledging them.
+3. Check `handoff/SESSION-CHECKPOINT.md` — if active and recent, read it.
+4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`.
+5. Read `ARCHITECT.md`.
+6. Report status to the Product Owner in one paragraph.
 AGENTS_EOF
     fi
     echo "  ✓ Created AGENTS.md"
   fi
 
-  # Role stubs
+  # Full role templates. Existing project-specific personas are never overwritten.
   for role in ARCHITECT BUILDER REVIEWER; do
     dest_file="$dest/${role}.md"
     if [ -f "$dest_file" ]; then
       echo "  ✓ ${role}.md already exists — not overwriting"
     else
-      cat > "$dest_file" << ROLEEOF
-# ${role} — Three Man Team
-*Customize: replace with the role's name and persona. See references/role-templates/${role}.md for the full template.*
-
-## Session Start
-1. Read handoff files as described in AGENTS.md.
-
-## Role
-[Describe who this agent is and their responsibilities.]
-ROLEEOF
-      echo "  ✓ Created ${role}.md (stub — customize the persona)"
+      cp "$SCRIPT_DIR/references/role-templates/${role}.md" "$dest_file"
+      echo "  ✓ Created ${role}.md (full framework template — customize if desired)"
     fi
   done
 
@@ -273,7 +324,7 @@ echo ""
 
 case "$MODE" in
   plugin-only)
-    install_plugin
+    install_plugin || exit 1
     ;;
   both)
     if [ -z "$DEST" ] || [ "$DEST" = "--plugin" ]; then
@@ -283,7 +334,7 @@ case "$MODE" in
     fi
     DEST="$(cd "$DEST" 2>/dev/null && pwd)" || { echo "✗ Project folder not found: $DEST"; exit 1; }
     install_project "$DEST"
-    install_plugin
+    install_plugin || exit 1
     ;;
   project)
     if [ -z "$DEST" ] || [ "${DEST:0:1}" = "-" ]; then
@@ -305,16 +356,16 @@ echo ""
 if [ "$MODE" = "project" ] || [ "$MODE" = "both" ]; then
   echo "  Project files in: $DEST"
   echo "    - AGENTS.md (session router)"
-  echo "    - ARCHITECT.md, BUILDER.md, REVIEWER.md (role stubs)"
+  echo "    - ARCHITECT.md, BUILDER.md, REVIEWER.md (full role templates)"
   echo "    - handoff/ (brief, review, build-log, checkpoint)"
   echo ""
 fi
 if [ "$MODE" = "plugin-only" ] || [ "$MODE" = "both" ]; then
-  echo "  Codex plugin installed — use @three-man-team in Codex CLI"
+  echo "  Codex plugin: $PLUGIN_STATUS"
 fi
 echo ""
 echo "  Next steps:"
-echo "    1. Customize the role files with your team's names and personas"
-echo "    2. Start a Codex session and type @three-man-team"
+echo "    1. Review the role files and customize team names/personas if needed"
+echo "    2. Start a Codex session and invoke the Three Man Team skill"
 echo "========================================="
 echo ""

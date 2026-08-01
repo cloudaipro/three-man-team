@@ -1,0 +1,51 @@
+{
+  "version": "1.2.5",
+  "released": "2026-06-04",
+  "arch_opening": "I see version {version} of Three Man Team is available. Before we get into today's work, I want to check two things that may be silently broken in your setup — and one upgrade worth having. I'll look at your actual files and tell you exactly what applies to you. This will take a few minutes.",
+  "changes": [
+    {
+      "id": "reviewer-filename-fix",
+      "type": "bug",
+      "title": "Reviewer spinup references wrong filename",
+      "what_changed": "The line Arch uses to spin up the Reviewer referenced RICHARD.md — a file that has never existed. Corrected to REVIEWER.md in the default templates.",
+      "old_behavior": "Arch told the Reviewer to read RICHARD.md at session start.",
+      "new_behavior": "Arch tells the Reviewer to read REVIEWER.md — or whatever the user has named their reviewer role file.",
+      "user_impact_plain": "If your Reviewer is failing to load their role file, this is why. One-word fix — but only if it applies to your setup.",
+      "how_to_assess": "Read the user's Architect role file. Find the section where the Reviewer agent is spun up — it follows the line about Builder signaling done. Look at the 'Then read X.md' instruction. Check whether that file actually exists in the project root. If it does not exist, this bug applies. If it does exist under a custom name the user chose, they are fine.",
+      "user_decision": "Does the file your Reviewer is told to read actually exist in your project? If not, what is the correct filename for your reviewer role?"
+    },
+    {
+      "id": "builder-filename-fix",
+      "type": "bug",
+      "title": "Builder spinup references wrong filename",
+      "what_changed": "The line Arch uses to spin up Builder referenced BOB.md in some install paths. The v1.2.4 fix only reached one template. Corrected across all paths.",
+      "old_behavior": "Arch told Builder to read BOB.md at session start in some installs.",
+      "new_behavior": "Arch tells Builder to read BUILDER.md — or whatever the user has named their builder role file.",
+      "user_impact_plain": "If you applied the v1.2.4 fix, you may already be good. Worth checking — if Builder is failing to load their role file, this is why.",
+      "how_to_assess": "Read the user's Architect role file. Find the section where Builder is spun up. Look at the 'Then read X.md' instruction. Check whether that file actually exists in the project root. If it does not exist, this bug applies. If the user already fixed this after v1.2.4 or has a custom name, they are fine.",
+      "user_decision": "Does the file your Builder is told to read actually exist in your project? If not, what is the correct filename for your builder role?"
+    },
+    {
+      "id": "version-check-upgrade",
+      "type": "improvement",
+      "title": "Version check upgraded to full procedure",
+      "what_changed": "The version check in Session Start was a simplified ping-and-link. Upgraded to the full procedure: tracks version_notified in SESSION-CHECKPOINT.md, skips silently if already notified, fetches the release JSON and walks migration steps conversationally.",
+      "old_behavior": "Version check pinged the API, compared to local VERSION, and printed a link to the releases page. No tracking, no walkthrough.",
+      "new_behavior": "Full procedure: reads version_notified, skips if current, fetches release JSON if newer, walks the Project Owner through changes at their pace.",
+      "user_impact_plain": "The version check now actually guides you through updates instead of dropping a link. This is what makes the whole system useful going forward.",
+      "how_to_assess": "Read the user's Architect role file Session Start section. Find the version check step. Does it reference version_notified and SESSION-CHECKPOINT.md? If it just pings the API and prints a link, the full procedure is not in place. If the user has a custom version check they prefer, ask before suggesting a change.",
+      "user_decision": "Would you like to upgrade your version check to the full procedure? It will track what you have been notified about and walk you through future updates conversationally."
+    },
+    {
+      "id": "template-improvements",
+      "type": "improvement",
+      "title": "Role file improvements across the board",
+      "what_changed": "ARCHITECT.md Job 1 now documents Diagnose vs Direction modes. BUILDER.md REVIEW-REQUEST format is explicit with sub-bullets. REVIEWER.md section title simplified. CLAUDE.md redundant handoff list removed.",
+      "old_behavior": "Minor clarity gaps and redundant content in the role files.",
+      "new_behavior": "Tighter instructions, less redundancy, no behavior change.",
+      "user_impact_plain": "Quality improvements — nothing breaks if you stay on your current versions. Worth picking up if you are doing a refresh.",
+      "how_to_assess": "Ask the user if they want a summary of the wording improvements. Only go through these if they express interest — they are cosmetic, not functional.",
+      "user_decision": "Would you like a summary of the wording improvements in this release? They are optional and nothing breaks without them."
+    }
+  ]
+}
