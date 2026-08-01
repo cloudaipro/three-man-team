@@ -233,7 +233,7 @@ Usage:
 |---|---|---|
 | `--dry-run` | both | Show what would change, change nothing |
 | `--replace-role-files` | claude only | Also replace ARCHITECT.md, BUILDER.md, REVIEWER.md — refused on renamed or customized installs. Codex installs don't need it: the full role templates live inside the skill, which the codex upgrade already refreshes |
-| `CODEX_HOME=<dir>` (env) | codex only | Where the skill lives, if your Codex directory is not `~/.codex` |
+| `TMT_CODEX_SKILL_DIR=<dir>` (env) | codex only | Override the exact skill directory to refresh. Normally unnecessary: the tool detects repository-scoped, personal, and existing `$CODEX_HOME/skills` installs |
 
 Both paths back up everything they edit, never touch your live `handoff/` data, team
 names, or personas, and deliberately leave your version markers alone — your next
@@ -263,18 +263,22 @@ skill — points your version check at this repo, backs up every file it edits, 
 touches your live `handoff/` data, team names, or personas. Then start your next session
 with `/architect`: Arch walks the remaining role-file upgrades with you interactively.
 
-Using the Codex skill instead? Same tool, one word different:
+Using the Codex skill instead? From the repository checkout, use the same tool with
+one word different:
 
 ```bash
-~/.claude/skills/three-man-team/upgrade codex /path/to/your/project
+./upgrade codex /path/to/your/project
 ```
 
-The codex upgrade refreshes the installed skill at `~/.codex/skills/three-man-team`
-(framework files — playbooks, role templates, the bundled version registry — live inside
-the skill, and the previous version is kept as a backup next to it), then adds any newly
+The codex upgrade refreshes the repository-scoped skill when the project has one;
+otherwise it refreshes the personal skill at `~/.agents/skills/three-man-team`. It also
+recognizes an existing `$CODEX_HOME/skills/three-man-team` install. Framework files
+— playbooks, role templates, and the bundled version registry — live inside the skill,
+and the previous version is kept as a backup next to it. The tool then adds newly
 introduced project files (like `RULES.md`) without overwriting anything of yours. Your
 next Codex session's version check sees the refreshed registry and walks the changes with
-you. Set `CODEX_HOME` if your Codex directory is not `~/.codex`.
+you. Use `TMT_CODEX_SKILL_DIR` only when you need to select a different installation
+explicitly.
 
 ---
 
@@ -303,7 +307,7 @@ published, fine tuned, and will continue to get better over time as AI models an
 
 ## Codex Integration
 
-Three Man Team ships as a [Codex skill](https://github.com/openai/skills) — the full methodology adapted for Codex's architecture. The skill runs in any Codex session: you are the Architect, and you spawn Builder and Reviewer as sub-agents using Codex's `spawn_agent` function.
+Three Man Team ships as a [Codex skill](https://learn.chatgpt.com/docs/build-skills) — the full methodology adapted for Codex's architecture. The skill runs in any Codex session: you are the Architect, and you spawn Builder and Reviewer as sub-agents using Codex's `spawn_agent` function.
 
 ### What's in the skill
 
@@ -323,7 +327,7 @@ Installed at `codex-skill/` in this repo:
 
 | Dimension | Claude Code TMT | Codex TMT Skill |
 |---|---|---|
-| **Session boot** | Slash commands (`/architect`) | Skill triggers on structured work keywords |
+| **Session boot** | Slash commands (`/architect`) | `$three-man-team` or automatic description matching |
 | **Builder spawn** | Claude Code Agent tool | `spawn_agent` with preferred Terra model, falling back to runtime default |
 | **Reviewer spawn** | Claude Code Agent tool | `spawn_agent` with preferred Luna model, falling back to runtime default |
 | **Session router** | CLAUDE.md | AGENTS.md |
@@ -342,7 +346,7 @@ cp -R codex-skill /path/to/your/project/.agents/skills/three-man-team
 /path/to/your/project/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 ```
 
-Restart Codex from that project. The repository-scoped skill will trigger automatically for structured software development, planning, multi-step builds, review, or Three Man Team role names.
+Codex detects repository-scoped skills automatically; if the skill does not appear, restart Codex from that project. It can trigger for structured software development, planning, multi-step builds, review, or Three Man Team role names.
 
 ### Global install (all projects)
 
@@ -353,10 +357,10 @@ mkdir -p ~/.agents/skills
 cp -R codex-skill ~/.agents/skills/three-man-team
 ```
 
-Restart Codex to pick up the global skill. To upgrade an existing install later, pull the repository and run the upgrade from its checkout:
+Codex detects personal skills automatically; if the skill does not appear, restart Codex. To upgrade an existing install later, pull the repository and run the upgrade from its checkout:
 
 ```bash
-CODEX_HOME=~/.agents ./upgrade codex /path/to/your/project
+./upgrade codex /path/to/your/project
 ```
 
 The upgrade keeps a backup of the existing skill and adds newly introduced project files without touching your customizations.
@@ -367,10 +371,10 @@ The setup script scaffolds project files and optionally registers the Codex plug
 # Project files only (AGENTS.md, full role templates, handoff templates)
 ~/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 
-# Project files + @three-man-team Codex plugin
+# Project files + installable Three Man Team Codex plugin
 ~/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project --plugin
 
-# Codex plugin only (adds @three-man-team mention to Codex CLI)
+# Codex plugin only
 ~/.agents/skills/three-man-team/scripts/setup-project.sh --plugin-only
 ```
 
@@ -378,16 +382,18 @@ Project files: `AGENTS.md` (session router), full role templates, and a full set
 
 The `--plugin` flag stages a skills-only plugin at `~/plugins/three-man-team/`, registers it in the personal marketplace at `~/.agents/plugins/marketplace.json`, then runs `codex plugin add`. On a replacement install it applies a Codex build-metadata cachebuster before reinstalling, so the CLI cannot reuse stale skill content. It reports failure if Codex cannot install it. The `--plugin-only` flag skips project files and performs that same plugin workflow. A legacy payload under `~/.agents/plugins/plugins/three-man-team/` is left untouched because Codex resolves `./plugins/three-man-team` to `~/plugins/three-man-team/`.
 
-### How to trigger in Codex CLI
+### How to trigger in Codex
 
-**`@three-man-team` mention** — available after the skills-only plugin has staged and `codex plugin add` succeeds:
+**Explicit skill invocation** — use Codex's `$skill-name` syntax with either the standalone skill or the installed plugin's bundled skill:
 
+```text
+$three-man-team I need to build a login feature; plan it out
+$three-man-team let's add email validation to the registration endpoint
 ```
-@three-man-team I need to build a login feature, plan it out
-@three-man-team let's add email validation to the registration endpoint
-```
 
-**Description matching** — the skill also activates automatically when you mention structured work:
+After installing the plugin, start a new Codex session before invoking its bundled skill.
+
+**Description matching** — Codex can also activate the skill automatically when the task matches its description:
 
 ```
 Use Three Man Team to plan this feature

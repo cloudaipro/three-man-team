@@ -1,7 +1,7 @@
 #!/bin/bash
 # Three Man Team — Codex project setup
 # Scaffolds handoff templates, full role templates, AGENTS.md into a project directory,
-# and optionally stages and installs the @three-man-team Codex plugin.
+# and optionally stages and installs the Three Man Team Codex plugin.
 #
 # Usage:
 #   ./setup-project.sh /path/to/your/project             # project files only
@@ -163,7 +163,7 @@ PY
 
   if "${TMT_CODEX_BIN:-codex}" plugin add "three-man-team@$marketplace_name"; then
     PLUGIN_STATUS="installed"
-    echo "  ✓ Plugin installed in Codex — use @three-man-team to trigger the skill"
+    echo '  ✓ Plugin installed in Codex — use $three-man-team to trigger the skill'
   else
     PLUGIN_STATUS="staged but not installed"
     echo "  ✗ Codex plugin add failed; plugin was staged but is not installed."

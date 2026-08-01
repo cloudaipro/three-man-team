@@ -31,6 +31,12 @@ Options:
                         stubs or your own customizations, neither of which can
                         be safely overwritten
 
+Environment:
+  TMT_CODEX_SKILL_DIR   (codex only) exact skill directory to refresh.
+                        Normally unnecessary: the upgrader checks the project,
+                        ~/.agents/skills, then an existing $CODEX_HOME/skills
+                        install (default CODEX_HOME: ~/.codex)
+
 What the claude upgrade does:
   - installs playbooks/ and .claude/commands/ (framework-owned, role-neutral)
   - installs the RULES.md quality-contract skeleton if missing (never overwrites)
@@ -39,9 +45,10 @@ What the claude upgrade does:
   - adds the Lessons section to your live BUILD-LOG
 
 What the codex upgrade does:
-  - refreshes the installed skill at $CODEX_HOME/skills/three-man-team
-    (default: ~/.codex/skills/three-man-team) — framework files live there,
-    and the previous version is kept as a backup next to it
+  - refreshes the installed project or personal skill. It checks, in order:
+    <project>/.agents/skills/three-man-team, ~/.agents/skills/three-man-team,
+    then an existing $CODEX_HOME/skills/three-man-team install. Framework files
+    live there, and the previous version is kept as a backup next to it
   - re-runs the skill's setup-project.sh on your project, which only ADDS
     files introduced since your install (e.g. RULES.md) — existing files,
     role stubs, and handoff data are never overwritten
@@ -129,7 +136,21 @@ if [ "$CLI" = "codex" ]; then
   [ -f "$SKILL_SRC/SKILL.md" ] || {
     echo "✗ This clone has no codex-skill/ directory. Run: git -C $SCRIPT_DIR pull"; exit 1; }
 
-  SKILL_DEST="${CODEX_HOME:-$HOME/.codex}/skills/three-man-team"
+  PROJECT_SKILL_DEST="$PROJECT/.agents/skills/three-man-team"
+  USER_SKILL_DEST="$HOME/.agents/skills/three-man-team"
+  CODEX_HOME_SKILL_DEST="${CODEX_HOME:-$HOME/.codex}/skills/three-man-team"
+  if [ -n "${TMT_CODEX_SKILL_DIR:-}" ]; then
+    SKILL_DEST="$TMT_CODEX_SKILL_DIR"
+  elif [ -d "$PROJECT_SKILL_DEST" ]; then
+    SKILL_DEST="$PROJECT_SKILL_DEST"
+  elif [ -d "$USER_SKILL_DEST" ]; then
+    SKILL_DEST="$USER_SKILL_DEST"
+  elif [ -d "$CODEX_HOME_SKILL_DEST" ]; then
+    SKILL_DEST="$CODEX_HOME_SKILL_DEST"
+  else
+    # New standalone installs use Codex's documented personal-skill location.
+    SKILL_DEST="$USER_SKILL_DEST"
+  fi
   PLUGIN_DEST="${TMT_PLUGIN_ROOT:-$HOME/plugins}/three-man-team"
   LEGACY_PLUGIN_DEST="${TMT_MARKETPLACE_DIR:-$HOME/.agents/plugins}/plugins/three-man-team"
 
@@ -222,7 +243,7 @@ if [ "$CLI" = "codex" ]; then
     echo ""
     echo "  Next: start a Codex session in your project and type:"
     echo ""
-    echo "  @three-man-team"
+    echo '  $three-man-team'
   fi
   echo "========================================="
   echo ""
