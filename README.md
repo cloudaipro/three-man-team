@@ -14,7 +14,9 @@
 
 ## What's New — v2.4.0
 
-**Critical release checkpoint.** v2.4.0 is the current release and must be walked with the Product Owner before a project acknowledges it.
+**Critical release checkpoint.** v2.4.0 is the current release. The registry marks it critical, so the Architect must walk [the v2.4.0 release record](releases/v2.4.0.json) with the Product Owner before acknowledging it. Projects on an older version will see this checkpoint at session start.
+
+## v2.3.1 — Codex scaffolder repair
 
 **The installer was behind the instructions.** v2.3.0 added a `scripts/check-handoff.sh` row to `RULES.md`'s Mechanical Gate, but the Codex scaffolder never installed the script — so every Codex project set up on v2.3.0 carries a gate command that fails on every step, and a failing gate blocks every review request. The Claude build was unaffected. **If you are on Codex, this patch is the fix**, and your install cannot find it on its own: a project stamped `v2.3.0` matches the old registry, so the version check stays silent.
 
@@ -328,34 +330,48 @@ Installed at `codex-skill/` in this repo:
 | **Version check** | curl to GitHub API | `check-version.py` (local, sandbox-safe) |
 | **Playbook paths** | `playbooks/` | `references/playbooks/` (inside skill dir) |
 
-### Install the skill
+### Per-project install (recommended)
 
-The skill is pre-installed in this repo. To use it in your Codex environment:
+Use this when only one repository should carry the Three Man Team skill. From a checkout of this repository:
 
 ```bash
-# Copy the standalone skill into your Codex skills directory
-cp -R codex-skill ~/.codex/skills/three-man-team
+mkdir -p /path/to/your/project/.agents/skills
+cp -R codex-skill /path/to/your/project/.agents/skills/three-man-team
+
+# Add AGENTS.md, full role templates, and handoff templates
+/path/to/your/project/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 ```
 
-To upgrade an existing install later, pull the repo and run `./upgrade codex
-/path/to/your/project` — it refreshes the skill (backup kept) and adds any newly
-introduced project files without touching your customizations.
+Restart Codex from that project. The repository-scoped skill will trigger automatically for structured software development, planning, multi-step builds, review, or Three Man Team role names.
 
-Restart Codex to pick up the new skill. It will trigger automatically when your task involves structured software development, planning, multi-step builds, or review — or when you mention "three man team", "TMT", or any role name.
+### Global install (all projects)
 
-### Set up a project
+Use this when you want the skill available in every repository:
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R codex-skill ~/.agents/skills/three-man-team
+```
+
+Restart Codex to pick up the global skill. To upgrade an existing install later, pull the repository and run the upgrade from its checkout:
+
+```bash
+CODEX_HOME=~/.agents ./upgrade codex /path/to/your/project
+```
+
+The upgrade keeps a backup of the existing skill and adds newly introduced project files without touching your customizations.
 
 The setup script scaffolds project files and optionally registers the Codex plugin:
 
 ```bash
 # Project files only (AGENTS.md, full role templates, handoff templates)
-~/.codex/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
+~/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 
 # Project files + @three-man-team Codex plugin
-~/.codex/skills/three-man-team/scripts/setup-project.sh /path/to/your/project --plugin
+~/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project --plugin
 
 # Codex plugin only (adds @three-man-team mention to Codex CLI)
-~/.codex/skills/three-man-team/scripts/setup-project.sh --plugin-only
+~/.agents/skills/three-man-team/scripts/setup-project.sh --plugin-only
 ```
 
 Project files: `AGENTS.md` (session router), full role templates, and a full set of `handoff/` templates. Customize the role files with your team's names and personas.
