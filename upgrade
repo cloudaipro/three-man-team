@@ -48,7 +48,8 @@ What the codex upgrade does:
   - refreshes the installed project or personal skill. It checks, in order:
     <project>/.agents/skills/three-man-team, ~/.agents/skills/three-man-team,
     then an existing $CODEX_HOME/skills/three-man-team install. Framework files
-    live there, and the previous version is kept as a backup next to it
+    live there. The previous version is kept outside the scanned skills folder,
+    under the installation scope's skill-backups/ directory
   - re-runs the skill's setup-project.sh on your project, which only ADDS
     files introduced since your install (e.g. RULES.md) — existing files,
     role stubs, and handoff data are never overwritten
@@ -176,11 +177,23 @@ if [ "$CLI" = "codex" ]; then
   esac
 
   if [ -d "$SKILL_DEST" ]; then
-    SKILL_BACKUP="$SKILL_DEST.backup-$(date +%Y%m%d-%H%M%S)"
+    SKILL_SCOPE_ROOT="$(dirname "$(dirname "$SKILL_DEST")")"
+    SKILL_BACKUP_ROOT="$SKILL_SCOPE_ROOT/skill-backups"
+    SKILL_BACKUP="$SKILL_BACKUP_ROOT/three-man-team-$(date +%Y%m%d-%H%M%S)"
     if [ "$DRY" = 0 ]; then
-      cp -R "$SKILL_DEST" "$SKILL_BACKUP"
-      rm -rf "$SKILL_DEST"
-      cp -R "$SKILL_SRC" "$SKILL_DEST"
+      mkdir -p "$SKILL_BACKUP_ROOT" || {
+        echo "✗ Could not create skill backup directory: $SKILL_BACKUP_ROOT"; exit 1; }
+      mv "$SKILL_DEST" "$SKILL_BACKUP" || {
+        echo "✗ Could not back up existing skill to: $SKILL_BACKUP"; exit 1; }
+      if ! cp -R "$SKILL_SRC" "$SKILL_DEST"; then
+        echo "✗ Could not install the refreshed skill at: $SKILL_DEST"
+        if mv "$SKILL_BACKUP" "$SKILL_DEST"; then
+          echo "  Previous skill restored."
+        else
+          echo "  Previous skill remains at: $SKILL_BACKUP"
+        fi
+        exit 1
+      fi
     fi
     plan "skill refreshed to $LATEST (previous version: $SKILL_BACKUP)"
   else

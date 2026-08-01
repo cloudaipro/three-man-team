@@ -274,7 +274,8 @@ The codex upgrade refreshes the repository-scoped skill when the project has one
 otherwise it refreshes the personal skill at `~/.agents/skills/three-man-team`. It also
 recognizes an existing `$CODEX_HOME/skills/three-man-team` install. Framework files
 — playbooks, role templates, and the bundled version registry — live inside the skill,
-and the previous version is kept as a backup next to it. The tool then adds newly
+and the previous version is kept outside Codex's scanned `skills/` directory under the
+installation scope's `skill-backups/` directory. The tool then adds newly
 introduced project files (like `RULES.md`) without overwriting anything of yours. Your
 next Codex session's version check sees the refreshed registry and walks the changes with
 you. Use `TMT_CODEX_SKILL_DIR` only when you need to select a different installation
@@ -363,7 +364,7 @@ Codex detects personal skills automatically; if the skill does not appear, resta
 ./upgrade codex /path/to/your/project
 ```
 
-The upgrade keeps a backup of the existing skill and adds newly introduced project files without touching your customizations.
+The upgrade keeps a backup of the existing skill in `~/.agents/skill-backups/` and adds newly introduced project files without touching your customizations.
 
 The setup script scaffolds project files and optionally registers the Codex plugin:
 
