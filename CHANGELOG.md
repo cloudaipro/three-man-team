@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.4.0 — 2026-08-01
+
+- **Critical**: The release registry now marks v2.4.0 as the current mandatory checkpoint. Projects must walk this release before acknowledging it.
+
 ## v2.3.1 — 2026-07-26
 
 The theme: *the installer was behind the instructions*. v2.3.0's content ported to the Codex build correctly — role templates, playbooks, `RULES.md`, `AGENTS.md`, `SKILL.md`, `token-optimization.md` all carried the changes. The Codex **scaffolder** did not. `codex-skill/scripts/setup-project.sh` installed `RULES.md`, which now carries a Mechanical Gate row calling `scripts/check-handoff.sh`, but never installed the script. Every Codex project set up or upgraded on v2.3.0 carries a gate command that fails on every step — and because a failing gate is an Iron Rule bounce, no review request can pass until it is fixed. The Claude build was unaffected: its `upgrade` tool shipped the script from the start.

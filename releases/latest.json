@@ -1,6 +1,12 @@
 {
-  "latest": "v2.3.1",
+  "latest": "v2.4.0",
   "versions": [
+    {
+      "version": "v2.4.0",
+      "released": "2026-08-01",
+      "critical": true,
+      "reason": "This release is a mandatory checkpoint. Projects must walk the v2.4.0 release details before acknowledging the new current version"
+    },
     {
       "version": "v2.3.1",
       "released": "2026-07-26",

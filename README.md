@@ -12,7 +12,9 @@
 
 ---
 
-## What's New — v2.3.1
+## What's New — v2.4.0
+
+**Critical release checkpoint.** v2.4.0 is the current release and must be walked with the Product Owner before a project acknowledges it.
 
 **The installer was behind the instructions.** v2.3.0 added a `scripts/check-handoff.sh` row to `RULES.md`'s Mechanical Gate, but the Codex scaffolder never installed the script — so every Codex project set up on v2.3.0 carries a gate command that fails on every step, and a failing gate blocks every review request. The Claude build was unaffected. **If you are on Codex, this patch is the fix**, and your install cannot find it on its own: a project stamped `v2.3.0` matches the old registry, so the version check stays silent.
 

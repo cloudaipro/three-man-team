@@ -1,6 +1,6 @@
 {
   "name": "three-man-team",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Structured software development with Architect, Builder, and Reviewer roles — plan, build, review, deploy with playbook-driven discipline.",
   "author": {
     "name": "Three Man Team",

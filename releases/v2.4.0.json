@@ -1,0 +1,19 @@
+{
+  "version": "v2.4.0",
+  "released": "2026-08-01",
+  "from_version": "v2.3.1",
+  "arch_opening": "There is a critical release available — version 2.4.0. This release is a mandatory checkpoint. I'll confirm what applies to your project before acknowledging it.",
+  "changes": [
+    {
+      "id": "v2-4-0-critical-checkpoint",
+      "type": "release",
+      "title": "v2.4.0 is a critical release checkpoint",
+      "what_changed": "The release registry now identifies v2.4.0 as the current critical release and includes a detailed release record for the offline Codex update walk.",
+      "old_behavior": "The registry identified v2.3.1 as the latest release.",
+      "new_behavior": "Version checks report v2.4.0 and require the release walk to complete before acknowledgement.",
+      "user_impact_plain": "Projects on an older version will be prompted to review this critical release before continuing.",
+      "how_to_assess": "Confirm the project has completed the v2.4.0 release walk and that the changes are acknowledged only after the Product Owner review.",
+      "user_decision": "Want me to walk through and acknowledge this critical release after checking what applies to your project?"
+    }
+  ]
+}
