@@ -60,17 +60,17 @@ First brief on a project: if `RULES.md` `## Mechanical Gate` is still the unfill
 
 Before spinning up the Builder: run the Pre-Flight Check from `references/playbooks/PLANNING.md` — seven answers, one line each, written in your reply, then `scripts/check-handoff.sh brief` as the eighth. A shaky answer means fix the plan. A failing check means fix the brief; never spin up the Builder over one, because the context they burn discovering the same gap is yours.
 
-Spawn the Builder with a unique `task_name` such as `builder_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-terra"`, and normal reasoning effort:
+Spawn the Builder with a unique `task_name` such as `builder_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-luna", reasoning_effort: "max"`:
 > First load the active Three Man Team skill's canonical `references/role-templates/BUILDER.md`, then handoff/ARCHITECT-BRIEF.md. Read a project-local BUILDER.md only afterwards for supplemental persona or project constraints. Your task is Step ${step}. Run `scripts/check-handoff.sh brief` before writing any code. Update handoff/BUILD-LOG.md and write handoff/REVIEW-REQUEST.md when done. Signal when complete.
-If the runtime rejects Terra, omit `model` and use its default. Raise migrations, security-sensitive work, deletion, or irreversible effects to Sol/high effort.
+If Luna is unavailable, do not spawn Builder with a substitute model or effort; report the blocker to the Product Owner.
 
 ---
 
 ## Briefing the Reviewer
 
-When the Builder signals done, spawn the Reviewer with a unique `task_name` such as `reviewer_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-luna"`, and this message:
+When the Builder signals done, spawn the Reviewer with a unique `task_name` such as `reviewer_step_${step}_attempt_${attempt}`, `fork_turns: "none"`, preferred `model: "gpt-5.6-luna", reasoning_effort: "max"`, and this message:
 > First load the active Three Man Team skill's canonical `references/role-templates/REVIEWER.md`, then handoff/REVIEW-REQUEST.md. Read a project-local REVIEWER.md only afterwards for supplemental persona or project constraints. Read only the files listed. Write findings to handoff/REVIEW-FEEDBACK.md. Signal when complete.
-If Luna is unavailable, omit `model`; use Terra or Sol/high effort for security-sensitive or load-bearing review.
+If Luna is unavailable, do not spawn Reviewer with a substitute model or effort; report the blocker to the Product Owner.
 
 ---
 
@@ -80,17 +80,21 @@ A long-lived Builder is the most expensive thing this team can do. Context accum
 and is re-sent every turn, so cost grows with the square of session length — a multi-hour Builder
 can carry more re-read context than the feature is worth. Bound it:
 
-- **Scope briefs to fit one budget.** A step should be completable by the Builder inside ~90K
+- **Scope briefs to fit one budget.** Architect warns at 85K and checkpoints at 100K; Builder
+  warns at 75K and hands off at 90K; Reviewer warns at 50K and hands off at 60K. A step should be completable by the Builder inside ~90K
   tokens of context. A step needing dozens of files or a long exploratory build is two steps.
 - **Prefer sequential short-lived Builders over one long-lived Builder.** Same work, bounded
   context each. When the Builder checkpoints at its cap, spawn a fresh Builder from the handoff —
   never continue the swollen context.
-- **Route each role to its available model tier.** Prefer Sol for Architect, Terra for Builder,
-  and Luna for Reviewer, but retry with no `model` override if the runtime does not offer a named
-  tier. Reasoning effort is the within-tier knob; use the highest available effort and Sol for
-  irreversible steps, security work, or load-bearing decisions.
+- **Use the fixed child route.** Keep Architect unchanged. Every Builder and Reviewer spawn uses
+  Luna/Max with `fork_turns: "none"`. If Luna is unavailable, report the blocker instead of
+  substituting another model or effort level.
 - **Log cost per step.** Add a one-line `Cost:` to each BUILD-LOG step entry — calls, peak context,
   and spend if you have it. A step that crossed the budget is the signal the brief was too large.
+- **Batch evidence.** Keep a stable instruction prefix, but do not claim cache-key control. Collect
+  owner/device findings once after review: one crop per defect, about 20 relevant log lines, and
+  file references instead of transcripts. Use `python3 scripts/codex-usage-audit.py` only for
+  aggregate local estimates; it never prints prompt or response content.
 
 ---
 

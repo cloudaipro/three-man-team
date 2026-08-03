@@ -6,9 +6,14 @@
     "auditLog": "/Users/alex/data/work/three-man-team/logs/.7b73f06b490a0a9ad8cd938da39277d3e9b416a7-audit.json",
     "files": [
         {
-            "date": 1783468086203,
-            "name": "/Users/alex/data/work/three-man-team/logs/mcp-puppeteer-2026-07-07.log",
-            "hash": "694cc7a3960cf91e9508b3fc241f82f47f8101e67b39b5189f21b15f5b83fdde"
+            "date": 1785606174386,
+            "name": "/Users/alex/data/work/three-man-team/logs/mcp-puppeteer-2026-08-01.log",
+            "hash": "ff41e743e485eea27c3f50699b6bdddc8af692a210516e635246d846847be102"
+        },
+        {
+            "date": 1785707209973,
+            "name": "/Users/alex/data/work/three-man-team/logs/mcp-puppeteer-2026-08-02.log",
+            "hash": "5221d43d1e926c57783c83ab64f39a7e63cf5b42b4ae7f37f8092161b59ada82"
         }
     ],
     "hashType": "sha256"

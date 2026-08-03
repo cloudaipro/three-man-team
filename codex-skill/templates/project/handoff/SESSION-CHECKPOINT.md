@@ -7,6 +7,12 @@
 
 [One or two sentences: exactly what was happening and what the next action is]
 
+## Context Checkpoint
+
+- Role: [Architect / Builder / Reviewer]
+- Context reached: [warning / hard handoff / unknown]
+- Fresh session next action: [specific next action and only needed files]
+
 ---
 
 ## What Was Decided This Session

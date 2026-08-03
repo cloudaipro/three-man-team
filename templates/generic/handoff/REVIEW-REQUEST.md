@@ -26,6 +26,14 @@ Gate: PASS / FAIL / NO GATE DEFINED
 |---|---|
 | `[command]` | PASS / FAIL — [one line if anything is notable] |
 
+## Aggregate Cost Evidence
+
+*When local Codex JSONL is available, run `python3 scripts/codex-usage-audit.py`. Record only
+aggregate estimates: calls/sessions, input, cached input, output, peak input, model and role
+estimates. Never paste prompt or response content. If unavailable, say so.*
+
+- [Aggregate audit result or unavailable reason]
+
 ## Open Questions
 
 [Any uncertainties, decisions Builder made without explicit instruction, things to double-check]

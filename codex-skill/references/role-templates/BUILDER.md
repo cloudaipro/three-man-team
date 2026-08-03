@@ -14,7 +14,7 @@ Do not load the full project spec. The brief has what you need.
 
 The check is structural, not semantic: it proves the sections are there, the placeholders are filled, and the Definition of Done carries something runnable. Whether the content is *right* is still your judgment — a section that is present but ambiguous is still yours to bounce.
 
-**Operating cap: ~90K context.** Cross it → checkpoint and end your turn; the Architect respawns a fresh Builder. A clean 20K start beats a 300K continuation.
+**Operating budget: warn at 75K; hard handoff at ~90K context.** At the warning, write an active checkpoint and finish rather than extending the session; the Architect respawns a fresh Builder.
 
 ---
 

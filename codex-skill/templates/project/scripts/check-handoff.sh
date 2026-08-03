@@ -14,7 +14,7 @@
 # filled, and the Definition of Done carries something runnable. Whether the content is *right*
 # is still the reading role's judgment — and still theirs to bounce.
 #
-# Usage: scripts/check-handoff.sh brief|review-request|review-feedback
+# Usage: scripts/check-handoff.sh brief|review-request|review-feedback|checkpoint
 # Exit 0 = structurally complete.  Exit 1 = fix it before handing off.
 
 set -u
@@ -37,6 +37,20 @@ need_section() {
   return 1
 }
 
+# A heading alone is not a handoff. Instructional prose, when present, is not
+# a result either; the template placeholders check below handles those. This
+# only rejects sections with no body at all, so "- None." remains valid.
+need_section_body() {
+  if ! need_section "$1" "$2"; then
+    return 1
+  fi
+  if [ -z "$(section_body "$1" "$2" | tr -d '[:space:]')" ]; then
+    problem "$1 '$2' section is empty"
+    return 1
+  fi
+  return 0
+}
+
 # Body of a section: everything between its heading and the next heading of any level.
 section_body() {
   awk -v h="$2" '
@@ -50,7 +64,9 @@ section_body() {
 # First character must be alphanumeric, which excludes the "- [ ]" checkbox and "- [x]".
 # Markdown links "](" are excluded too.
 placeholders() {
-  grep -nE '\[[A-Za-z0-9][^]]*\]' "$1" | grep -v '](' || true
+  # Bracketed file references, e.g. [scripts/check-handoff.sh:16-64], are
+  # legitimate review evidence. Template placeholders do not name a path.
+  grep -nE '\[[A-Za-z0-9][^]]*\]' "$1" | grep -v '](' | grep -vE '\[[^]]*/[^]]*\]' || true
 }
 
 check_placeholders() {
@@ -87,8 +103,24 @@ check_brief() {
   fi
 
   need_section "$F" "Decisions"
+  need_section "$F" "Build Order"
   need_section "$F" "Out of Scope"
   need_section "$F" "Flags"
+
+  if need_section "$F" "Cost Budget"; then
+    BUDGET="$(section_body "$F" "Cost Budget")"
+    for threshold in 'Architect.*85K.*100K' 'Builder.*75K.*90K' 'Reviewer.*50K.*60K'; do
+      if ! echo "$BUDGET" | grep -qE "$threshold"; then
+        problem "$F Cost Budget is missing required threshold: $threshold"
+      fi
+    done
+  fi
+
+  if need_section "$F" "Owner Validation Batch"; then
+    if ! section_body "$F" "Owner Validation Batch" | grep -qiE 'Disposition:.*(required|not required|none)'; then
+      problem "$F Owner Validation Batch has no explicit validation disposition"
+    fi
+  fi
 
   if need_section "$F" "Definition of Done"; then
     DOD="$(section_body "$F" "Definition of Done")"
@@ -149,15 +181,53 @@ check_review_feedback() {
   F="handoff/REVIEW-FEEDBACK.md"
   need_file "$F" || return
 
+  if grep -qE '^# +Review Feedback — Step +[0-9]+' "$F"; then
+    ok "Review Feedback names a numbered step"
+  else
+    problem "$F has no numbered review step"
+  fi
+
+  if grep -qE '^Date: +[0-9]{4}-[0-9]{2}-[0-9]{2} *$' "$F"; then
+    ok "Review Feedback records an ISO date"
+  else
+    problem "$F has no ISO 'Date: YYYY-MM-DD' line"
+  fi
+
   if grep -qE '^Ready for Builder: *(YES|NO) *$' "$F"; then
     ok "Ready for Builder is decided"
   else
     problem "$F has no decided 'Ready for Builder:' line (still YES / NO, or missing)"
   fi
 
-  need_section "$F" "Must Fix"
-  need_section "$F" "Should Fix"
+  need_section_body "$F" "Must Fix"
+  need_section_body "$F" "Should Fix"
+  need_section_body "$F" "Escalate to Architect"
+  need_section_body "$F" "Cleared"
 
+  check_placeholders "$F"
+}
+
+# --- checkpoint --------------------------------------------------------------
+# Read by: any fresh role before resuming an active handoff.
+check_checkpoint() {
+  F="handoff/SESSION-CHECKPOINT.md"
+  need_file "$F" || return
+
+  need_section_body "$F" "Where We Stopped"
+  if need_section_body "$F" "Context Checkpoint"; then
+    CONTEXT="$(section_body "$F" "Context Checkpoint")"
+    for field in 'Role:' 'Context reached:' 'Fresh session next action:'; do
+      if ! echo "$CONTEXT" | grep -q "$field"; then
+        problem "$F Context Checkpoint is missing '$field'"
+      fi
+    done
+    if ! echo "$CONTEXT" | grep -qE 'Context reached: *(warning|hard handoff|unknown)'; then
+      problem "$F Context Checkpoint has no valid context status"
+    fi
+  fi
+  need_section_body "$F" "What Was Decided This Session"
+  need_section_body "$F" "Still Open"
+  need_section_body "$F" "Resume Prompt"
   check_placeholders "$F"
 }
 
@@ -165,8 +235,9 @@ case "${1:-}" in
   brief)           echo "— Architect brief";  check_brief ;;
   review-request)  echo "— Review request";   check_review_request ;;
   review-feedback) echo "— Review feedback";  check_review_feedback ;;
+  checkpoint)      echo "— Session checkpoint"; check_checkpoint ;;
   *)
-    echo "usage: scripts/check-handoff.sh brief|review-request|review-feedback" >&2
+    echo "usage: scripts/check-handoff.sh brief|review-request|review-feedback|checkpoint" >&2
     exit 2
     ;;
 esac

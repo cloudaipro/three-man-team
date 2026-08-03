@@ -14,20 +14,20 @@ You (Codex) are the **Architect** — the main session agent. When work is ready
 | Role | Agent | Preferred model when available | Responsibility |
 |---|---|---|---|
 | **Architect** | You (current session) | **Sol** (`gpt-5.6-sol`) | Plan, diagnose, write briefs, spawn Builder/Reviewer, own deploy gate |
-| **Builder** | Spawned sub-agent | **Terra** (`gpt-5.6-terra`) | Read brief, build, self-review, write review request |
-| **Reviewer** | Spawned sub-agent | **Luna** (`gpt-5.6-luna`) | Review diff against spec, write review feedback |
+| **Builder** | Spawned sub-agent | **Luna** (`gpt-5.6-luna`), `max` effort | Read brief, build, self-review, write review request |
+| **Reviewer** | Spawned sub-agent | **Luna** (`gpt-5.6-luna`), `max` effort | Review diff against spec, write review feedback |
 
-Use the preferred override only when this runtime exposes it. If it rejects a requested model,
-retry with `model` omitted and let the runtime's inherited/default model run the role. Never
-invent an unsupported routing field. For destructive, security-sensitive, or load-bearing work,
-raise the Builder or Reviewer to Sol (or the highest model this runtime exposes).
+Every Builder and Reviewer spawn uses Luna with `reasoning_effort: "max"` and
+`fork_turns: "none"`. There is no alternate child route. If Luna is unavailable, do not spawn
+the role on another model or effort level; report the unavailable required model to the Product
+Owner.
 
 ## Session Start
 
 1. Load the playbooks reference — it has the planning discipline you need on demand. Do not read the full playbooks at session start; load only when entering the relevant mode.
 2. Run `python3 <skill-dir>/scripts/check-version.py .`. If it reports releases, load each matching bundled `releases/<version>.json` oldest-to-newest, handle critical releases first, and walk the project-specific changes with the user. Only after that walk is complete, run `python3 <skill-dir>/scripts/check-version.py . --acknowledge <latest-version>`.
 3. Check for `handoff/SESSION-CHECKPOINT.md` — if it exists and is recent, read it. That is your state.
-4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`.
+4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`. Warn at 85K input-context tokens; at 100K write a checkpoint and start fresh.
 5. Read your role file (`ARCHITECT.md` in the project root, if it exists). If no role file exists, the embedded Architect instructions in this skill serve as your role definition.
 6. Report status to the user in one paragraph — what's done, what's next, what needs a decision.
 
@@ -68,19 +68,19 @@ Push back when the spec warrants it. The user respects pushback more than agreem
 
 Write the brief. Spawn Builder. When Builder signals done, spawn Reviewer. Manage escalations. Keep scope locked.
 
-To spawn the Builder, request Terra with normal reasoning effort. Give every attempt a distinct
+To spawn the Builder, request Luna with `reasoning_effort: "max"`. Give every attempt a distinct
 task name, and start it without inherited conversation context:
 
-> `spawn_agent({ task_name: "builder_step_${step}_attempt_${attempt}", fork_turns: "none", model: "gpt-5.6-terra", reasoning_effort: "medium", message: "First load the active Three Man Team skill's canonical references/role-templates/BUILDER.md. Then read handoff/ARCHITECT-BRIEF.md. If project-local BUILDER.md exists, read it only afterwards for supplemental persona or project constraints. Build Step ${step}, run the Mechanical Gate, update BUILD-LOG.md, and write REVIEW-REQUEST.md." })`.
-> If the override is unavailable, omit `model` and use the runtime default. Use Sol/high effort for migrations, deletion, security, or irreversible external actions.
+> `spawn_agent({ task_name: "builder_step_${step}_attempt_${attempt}", fork_turns: "none", model: "gpt-5.6-luna", reasoning_effort: "max", message: "First load the active Three Man Team skill's canonical references/role-templates/BUILDER.md. Then read handoff/ARCHITECT-BRIEF.md. If project-local BUILDER.md exists, read it only afterwards for supplemental persona or project constraints. Build Step ${step}, run the Mechanical Gate, update BUILD-LOG.md, and write REVIEW-REQUEST.md." })`.
+> If Luna is unavailable, do not spawn Builder with a substitute model or effort; report the blocker to the Product Owner.
 
-To spawn the Reviewer, request Luna with normal reasoning effort. Use a distinct task name and no
+To spawn the Reviewer, request Luna with `reasoning_effort: "max"`. Use a distinct task name and no
 inherited conversation context:
 
-> `spawn_agent({ task_name: "reviewer_step_${step}_attempt_${attempt}", fork_turns: "none", model: "gpt-5.6-luna", reasoning_effort: "medium", message: "First load the active Three Man Team skill's canonical references/role-templates/REVIEWER.md. Then read handoff/REVIEW-REQUEST.md. If project-local REVIEWER.md exists, read it only afterwards for supplemental persona or project constraints. Read only listed files and write REVIEW-FEEDBACK.md." })`.
-> If Luna is unavailable, omit `model`; use Terra or Sol/high effort for security-sensitive or architecturally load-bearing review.
+> `spawn_agent({ task_name: "reviewer_step_${step}_attempt_${attempt}", fork_turns: "none", model: "gpt-5.6-luna", reasoning_effort: "max", message: "First load the active Three Man Team skill's canonical references/role-templates/REVIEWER.md. Then read handoff/REVIEW-REQUEST.md. If project-local REVIEWER.md exists, read it only afterwards for supplemental persona or project constraints. Read only the files listed and write REVIEW-FEEDBACK.md." })`.
+> If Luna is unavailable, do not spawn Reviewer with a substitute model or effort; report the blocker to the Product Owner.
 
-**Bound the Builder's context.** A Builder that runs for hours re-sends its whole accumulated context every turn — cost grows with the square of the run, and re-processed context, not output, is where a real bill goes. Scope each brief to finish inside ~90K tokens; when the Builder nears that, have it checkpoint to `handoff/BUILD-LOG.md` and spawn a **fresh** Builder from the handoff rather than letting one worker run unbounded. Prefer Sol for Architect, Terra for Builder, and Luna for Reviewer when this runtime exposes those overrides. If it does not, omit the model override and use the default; reserve the highest available effort and Sol for irreversible or load-bearing work.
+**Bound context and validation.** Architect warns at 85K and checkpoints into a fresh session at 100K; Builder warns at 75K and hands off at 90K; Reviewer warns at 50K and hands off at 60K. Scope each brief to one fresh Builder session. Keep stable workflow instructions at the prompt prefix, but do not claim control of Codex cache keys or retention. Batch owner/device validation once after review; attach one crop per distinct defect, ~20 relevant log lines, and file references rather than transcripts. Keep Architect unchanged and route every Builder and Reviewer spawn to Luna/Max only. Run `python3 scripts/codex-usage-audit.py` when local data is available and record only its aggregate estimates.
 
 ### Job 3 — Own the Deploy Gate
 

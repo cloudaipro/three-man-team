@@ -1,2 +1,2 @@
-version: v2.4.0
-released: 2026-08-01
+version: v2.5.0
+released: 2026-08-02

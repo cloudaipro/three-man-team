@@ -12,9 +12,9 @@
 
 ---
 
-## What's New — v2.4.0
+## What's New — v2.5.0
 
-**Critical release checkpoint.** v2.4.0 is the current release. The registry marks it critical, so the Architect must walk [the v2.4.0 release record](releases/v2.4.0.json) with the Product Owner before acknowledging it. Projects on an older version will see this checkpoint at session start.
+**Critical release checkpoint.** v2.5.0 is the current release. The registry marks it critical, so the Architect must walk [the v2.5.0 release record](releases/v2.5.0.json) with the Product Owner before acknowledging it. Fresh Codex projects now use lean local role deltas; existing customized roles change only via `./upgrade codex --migrate-role-files <project>`, which creates timestamped backups. The aggregate-only local usage audit reports no prompts or responses. Every active Codex Builder and Reviewer spawn uses Luna/Max with fresh context; if Luna is unavailable, Architect reports the blocker instead of substituting another child configuration.
 
 ## v2.3.1 — Codex scaffolder repair
 
@@ -233,6 +233,7 @@ Usage:
 |---|---|---|
 | `--dry-run` | both | Show what would change, change nothing |
 | `--replace-role-files` | claude only | Also replace ARCHITECT.md, BUILDER.md, REVIEWER.md — refused on renamed or customized installs. Codex installs don't need it: the full role templates live inside the skill, which the codex upgrade already refreshes |
+| `--migrate-role-files` | codex only | Explicitly back up existing local role files, then replace them with lean project deltas. Normal upgrades never do this |
 | `TMT_CODEX_SKILL_DIR=<dir>` (env) | codex only | Override the exact skill directory to refresh. Normally unnecessary: the tool detects repository-scoped, personal, and existing `$CODEX_HOME/skills` installs |
 
 Both paths back up everything they edit, never touch your live `handoff/` data, team
@@ -329,8 +330,8 @@ Installed at `codex-skill/` in this repo:
 | Dimension | Claude Code TMT | Codex TMT Skill |
 |---|---|---|
 | **Session boot** | Slash commands (`/architect`) | `$three-man-team` or automatic description matching |
-| **Builder spawn** | Claude Code Agent tool | `spawn_agent` with preferred Terra model, falling back to runtime default |
-| **Reviewer spawn** | Claude Code Agent tool | `spawn_agent` with preferred Luna model, falling back to runtime default |
+| **Builder spawn** | Claude Code Agent tool | `spawn_agent` with Luna/Max only; unavailable Luna blocks the spawn |
+| **Reviewer spawn** | Claude Code Agent tool | `spawn_agent` with Luna/Max only; unavailable Luna blocks the spawn |
 | **Session router** | CLAUDE.md | AGENTS.md |
 | **Version check** | curl to GitHub API | `check-version.py` (local, sandbox-safe) |
 | **Playbook paths** | `playbooks/` | `references/playbooks/` (inside skill dir) |
@@ -343,7 +344,7 @@ Use this when only one repository should carry the Three Man Team skill. From a 
 mkdir -p /path/to/your/project/.agents/skills
 cp -R codex-skill /path/to/your/project/.agents/skills/three-man-team
 
-# Add AGENTS.md, full role templates, and handoff templates
+# Add AGENTS.md, lean project role deltas, and handoff templates
 /path/to/your/project/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 ```
 
@@ -361,15 +362,52 @@ cp -R codex-skill ~/.agents/skills/three-man-team
 Codex detects personal skills automatically; if the skill does not appear, restart Codex. To upgrade an existing install later, pull the repository and run the upgrade from its checkout:
 
 ```bash
-./upgrade codex /path/to/your/project
+cd /path/to/three-man-team
+git pull --ff-only origin main
+
+# Preview the global-skill and project changes
+TMT_CODEX_SKILL_DIR="$HOME/.agents/skills/three-man-team" \
+  ./upgrade codex /path/to/your/project --dry-run
+
+# Apply the update
+TMT_CODEX_SKILL_DIR="$HOME/.agents/skills/three-man-team" \
+  ./upgrade codex /path/to/your/project
 ```
 
-The upgrade keeps a backup of the existing skill in `~/.agents/skill-backups/` and adds newly introduced project files without touching your customizations.
+`TMT_CODEX_SKILL_DIR` explicitly selects the global install even when the target project also
+has a repository-scoped copy. The upgrade keeps the previous global skill under
+`~/.agents/skill-backups/` and adds newly introduced project files without overwriting existing
+customizations or live handoff data. Do not repeat `cp -R codex-skill
+~/.agents/skills/three-man-team` over an existing install: depending on the local `cp`
+implementation, that can merge stale files or create a nested `codex-skill/` directory.
+
+To replace legacy full project role files with v2.5's lean role deltas, opt in once with
+`--migrate-role-files`. The upgrader creates a separate timestamped backup before replacing
+them; normal global updates leave role files untouched.
+
+#### Remove the standalone global install
+
+Close active Codex sessions, then run the uninstaller from the repository checkout. Preview the
+exact target first:
+
+```bash
+./scripts/uninstall-global-codex-skill.sh --dry-run
+./scripts/uninstall-global-codex-skill.sh --yes
+```
+
+This permanently deletes `~/.agents/skills/three-man-team`; it does **not** create or move the
+skill to a backup. Without `--yes`, the script asks for interactive confirmation. It verifies
+the exact directory shape and the Three Man Team `SKILL.md` marker before deleting anything.
+Restart Codex after removal.
+
+The script removes only the standalone global skill. It does not remove repository-scoped
+copies, project files such as `AGENTS.md` or `handoff/`, existing backup directories, or a
+separately registered Codex plugin.
 
 The setup script scaffolds project files and optionally registers the Codex plugin:
 
 ```bash
-# Project files only (AGENTS.md, full role templates, handoff templates)
+# Project files only (AGENTS.md, lean role deltas, handoff templates)
 ~/.agents/skills/three-man-team/scripts/setup-project.sh /path/to/your/project
 
 # Project files + installable Three Man Team Codex plugin
@@ -379,7 +417,7 @@ The setup script scaffolds project files and optionally registers the Codex plug
 ~/.agents/skills/three-man-team/scripts/setup-project.sh --plugin-only
 ```
 
-Project files: `AGENTS.md` (session router), full role templates, and a full set of `handoff/` templates. Customize the role files with your team's names and personas.
+Project files: `AGENTS.md` (session router), lean role deltas, and a full set of `handoff/` templates. Customize the role files with your team's names and project-specific constraints; the installed skill remains the canonical workflow source.
 
 The `--plugin` flag stages a skills-only plugin at `~/plugins/three-man-team/`, registers it in the personal marketplace at `~/.agents/plugins/marketplace.json`, then runs `codex plugin add`. On a replacement install it applies a Codex build-metadata cachebuster before reinstalling, so the CLI cannot reuse stale skill content. It reports failure if Codex cannot install it. The `--plugin-only` flag skips project files and performs that same plugin workflow. A legacy payload under `~/.agents/plugins/plugins/three-man-team/` is left untouched because Codex resolves `./plugins/three-man-team` to `~/plugins/three-man-team/`.
 

@@ -27,7 +27,7 @@ Handoff files are the record: a decision that lives only in chat does not exist.
 1. Load the Three Man Team skill if available.
 2. Run `python3 <skill-dir>/scripts/check-version.py .`; walk listed bundled releases before acknowledging them.
 3. Check `handoff/SESSION-CHECKPOINT.md` — if active and recent, read it. That is your state.
-4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`.
+4. If no checkpoint: read `handoff/BUILD-LOG.md` then `handoff/ARCHITECT-BRIEF.md`. Warn at 85K input-context tokens; at 100K write a checkpoint and start fresh.
 5. Read `ARCHITECT.md`.
 6. Report status to the Product Owner in one paragraph.
 

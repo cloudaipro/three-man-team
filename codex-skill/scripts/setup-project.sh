@@ -1,6 +1,6 @@
 #!/bin/bash
 # Three Man Team — Codex project setup
-# Scaffolds handoff templates, full role templates, AGENTS.md into a project directory,
+# Scaffolds handoff templates, lean role deltas, AGENTS.md into a project directory,
 # and optionally stages and installs the Three Man Team Codex plugin.
 #
 # Usage:
@@ -222,14 +222,15 @@ AGENTS_EOF
     echo "  ✓ Created AGENTS.md"
   fi
 
-  # Full role templates. Existing project-specific personas are never overwritten.
+  # Role files contain only project-specific deltas. The installed skill is the
+  # canonical workflow source, so new projects do not carry a stale full copy.
   for role in ARCHITECT BUILDER REVIEWER; do
     dest_file="$dest/${role}.md"
     if [ -f "$dest_file" ]; then
       echo "  ✓ ${role}.md already exists — not overwriting"
     else
-      cp "$SCRIPT_DIR/references/role-templates/${role}.md" "$dest_file"
-      echo "  ✓ Created ${role}.md (full framework template — customize if desired)"
+      cp "$TPL/project/${role}.md" "$dest_file"
+      echo "  ✓ Created ${role}.md (lean project delta — canonical workflow stays in the skill)"
     fi
   done
 
@@ -251,6 +252,9 @@ AGENTS_EOF
   cp "$TPL/project/scripts/check-handoff.sh" "$dest/scripts/check-handoff.sh"
   chmod +x "$dest/scripts/check-handoff.sh"
   echo "  ✓ Installed scripts/check-handoff.sh (framework-owned — refreshed every run)"
+  cp "$SCRIPT_DIR/scripts/codex-usage-audit.py" "$dest/scripts/codex-usage-audit.py"
+  chmod +x "$dest/scripts/codex-usage-audit.py"
+  echo "  ✓ Installed scripts/codex-usage-audit.py (aggregate-only local usage audit)"
 
   # manifest.md — version marker the skill's version check reads.
   # Stamped from the bundled registry, never from the template's own text: a
@@ -356,7 +360,7 @@ echo ""
 if [ "$MODE" = "project" ] || [ "$MODE" = "both" ]; then
   echo "  Project files in: $DEST"
   echo "    - AGENTS.md (session router)"
-  echo "    - ARCHITECT.md, BUILDER.md, REVIEWER.md (full role templates)"
+  echo "    - ARCHITECT.md, BUILDER.md, REVIEWER.md (lean project deltas)"
   echo "    - handoff/ (brief, review, build-log, checkpoint)"
   echo ""
 fi

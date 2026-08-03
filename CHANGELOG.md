@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0 — 2026-08-02
+
+- **Critical**: Fresh Codex projects now create lean role-delta files; the installed skill is the only canonical workflow source. `./upgrade codex --migrate-role-files <project>` is the explicit, timestamped-backup-producing route for existing custom files, while ordinary upgrades preserve them.
+- **Feature**: `scripts/codex-usage-audit.py` reads local Codex JSONL defensively and reports only final cumulative token usage once per session, conservative role totals, and labelled cost-estimate availability. It never emits prompt or response content; synthetic tests cover changing event shapes and privacy.
+- **Improve**: fresh-context/model routing is executable and unconditional: every Builder and Reviewer spawn uses Luna/Max with `fork_turns: "none"`. There is no fallback, inheritance, or critical-child route; unavailable Luna blocks the spawn and is reported to the Product Owner. Role warning/handoff budgets are Architect 85K/100K, Builder 75K/90K, Reviewer 50K/60K. Handoff templates now carry checkpoints, aggregate cost evidence, and one-batch owner-validation guidance.
+
 ## v2.4.0 — 2026-08-01
 
 - **Critical**: The release registry now marks v2.4.0 as the current mandatory checkpoint. Projects must walk this release before acknowledging it.

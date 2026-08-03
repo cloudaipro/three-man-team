@@ -8,6 +8,7 @@ import unittest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 UPGRADE = os.path.join(REPO_ROOT, "upgrade")
+SETUP = os.path.join(REPO_ROOT, "codex-skill", "scripts", "setup-project.sh")
 
 
 class CodexUpgradeLocationTests(unittest.TestCase):
@@ -110,6 +111,75 @@ class CodexUpgradeLocationTests(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(backup, "old-version")))
             self.assertNotIn(".backup-", " ".join(os.listdir(os.path.dirname(repo_skill))))
             self.assertIn("previous version: " + backup, output)
+
+    def test_explicit_role_migration_backs_up_custom_files_then_slms_them(self):
+        with tempfile.TemporaryDirectory() as root:
+            home = os.path.join(root, "home")
+            project = self.make_project(root)
+            for role in ("ARCHITECT", "BUILDER", "REVIEWER"):
+                with open(os.path.join(project, role + ".md"), "w", encoding="utf-8") as handle:
+                    handle.write("custom " + role + " persona\n")
+
+            self.run_upgrade(home, project, dry_run=False, TMT_CODEX_SKILL_DIR=os.path.join(root, "skills", "three-man-team"), TMT_SKIP_PLUGIN_ADD="1")
+            # Setup is additive: migration is the only authorization to replace a persona.
+            output = subprocess.run(
+                [UPGRADE, "codex", "--migrate-role-files", project], text=True,
+                capture_output=True, env={**os.environ, "HOME": home, "TMT_CODEX_SKILL_DIR": os.path.join(root, "skills", "three-man-team"), "TMT_SKIP_PLUGIN_ADD": "1"}
+            )
+            self.assertEqual(0, output.returncode, output.stderr + output.stdout)
+            backups = [name for name in os.listdir(project) if name.startswith(".tmt-codex-role-backup-")]
+            self.assertEqual(1, len(backups))
+            backup = os.path.join(project, backups[0])
+            with open(os.path.join(backup, "ARCHITECT.md"), encoding="utf-8") as handle:
+                self.assertIn("custom ARCHITECT persona", handle.read())
+            with open(os.path.join(project, "ARCHITECT.md"), encoding="utf-8") as handle:
+                self.assertIn("canonical workflow", handle.read())
+
+    def test_role_migration_allocates_a_new_backup_when_timestamp_candidate_exists(self):
+        with tempfile.TemporaryDirectory() as root:
+            home = os.path.join(root, "home")
+            project = self.make_project(root)
+            for role in ("ARCHITECT", "BUILDER", "REVIEWER"):
+                with open(os.path.join(project, role + ".md"), "w", encoding="utf-8") as handle:
+                    handle.write("custom " + role + " persona\n")
+            timestamp = "20260802-010203"
+            existing = os.path.join(project, ".tmt-codex-role-backup-" + timestamp)
+            os.makedirs(existing)
+            with open(os.path.join(existing, "ARCHITECT.md"), "w", encoding="utf-8") as handle:
+                handle.write("do not overwrite this backup\n")
+            bin_dir = os.path.join(root, "bin")
+            os.makedirs(bin_dir)
+            with open(os.path.join(bin_dir, "date"), "w", encoding="utf-8") as handle:
+                handle.write("#!/bin/sh\necho " + timestamp + "\n")
+            os.chmod(os.path.join(bin_dir, "date"), 0o755)
+            environment = {
+                **os.environ,
+                "HOME": home,
+                "PATH": bin_dir + os.pathsep + os.environ["PATH"],
+                "TMT_CODEX_SKILL_DIR": os.path.join(root, "skills", "three-man-team"),
+                "TMT_SKIP_PLUGIN_ADD": "1",
+            }
+            result = subprocess.run(
+                [UPGRADE, "codex", "--migrate-role-files", project],
+                text=True, capture_output=True, env=environment,
+            )
+            self.assertEqual(0, result.returncode, result.stderr + result.stdout)
+            with open(os.path.join(existing, "ARCHITECT.md"), encoding="utf-8") as handle:
+                self.assertEqual("do not overwrite this backup\n", handle.read())
+            allocated = existing + "-1"
+            self.assertTrue(os.path.isdir(allocated))
+            with open(os.path.join(allocated, "ARCHITECT.md"), encoding="utf-8") as handle:
+                self.assertIn("custom ARCHITECT persona", handle.read())
+
+    def test_fresh_setup_creates_lean_role_deltas_and_audit(self):
+        with tempfile.TemporaryDirectory() as root:
+            project = os.path.join(root, "project")
+            os.makedirs(project)
+            result = subprocess.run([SETUP, project], text=True, capture_output=True)
+            self.assertEqual(0, result.returncode, result.stderr + result.stdout)
+            with open(os.path.join(project, "BUILDER.md"), encoding="utf-8") as handle:
+                self.assertIn("canonical workflow", handle.read())
+            self.assertTrue(os.path.isfile(os.path.join(project, "scripts", "codex-usage-audit.py")))
 
 
 if __name__ == "__main__":

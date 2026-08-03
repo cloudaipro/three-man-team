@@ -16,7 +16,7 @@ skill.
 
 ---
 
-## 1. Model routing — capability-aware Codex overrides
+## 1. Model routing — fixed Codex child overrides
 
 **What the Codex skill does.** It requests a model override in `spawn_agent` and routes roles by
 their preferred tier:
@@ -24,13 +24,12 @@ their preferred tier:
 | Role | Codex tier | Claude build |
 |---|---|---|
 | Architect | **Sol** (`gpt-5.6-sol`) — orchestration, planning, judgment, deploy gate | Claude equivalent: Opus |
-| Builder | **Terra** (`gpt-5.6-terra`) — bounded execution against a written brief | Claude equivalent: Sonnet |
-| Reviewer | **Luna** (`gpt-5.6-luna`) — bounded, gate-backed review of a small listed diff | Claude equivalent: Haiku |
+| Builder | **Luna/Max** (`gpt-5.6-luna`, `reasoning_effort: "max"`) — bounded execution against a written brief | Claude equivalent: Sonnet |
+| Reviewer | **Luna/Max** (`gpt-5.6-luna`, `reasoning_effort: "max"`) — bounded, gate-backed review of a small listed diff | Claude equivalent: Haiku |
 
-Reasoning effort is the within-tier knob. Reserve Sol and the highest available effort for
-irreversible, security-sensitive, or architecturally load-bearing work. If the runtime rejects a
-requested model, retry without `model` and use the inherited/default model. This fallback is
-required; a named tier is a preference, never a reason to block the handoff workflow.
+Architect routing remains Sol. Every Builder and Reviewer spawn uses Luna/Max with
+`fork_turns: "none"`; there is no alternate child route. If Luna is unavailable, Architect does
+not substitute another model or effort level and reports the blocker to the Product Owner.
 
 ---
 
@@ -55,9 +54,10 @@ guidance. Until then, do not add a cache setup step to the Codex skill.
 
 *Origin: v2.0.0 ("context is the cost"); §1 converged at v2.1.0 when GPT-5.6 gave Codex per-tier
 model selection. The Claude build's role files carry the literal Opus / Sonnet / Haiku routing and
-the `ENABLE_PROMPT_CACHING_1H` install step; the Codex build now carries the Sol / Terra / Luna
-analog (§1) but still omits the cache step (§2). This file records why — so the remaining
-divergence stays a deliberate choice rather than a drift someone "fixes" later.*
+the `ENABLE_PROMPT_CACHING_1H` install step; the Codex build carries Architect Sol plus
+unconditional Builder/Reviewer Luna/Max routing (§1), but still omits the cache step (§2). This
+file records why — so the remaining divergence stays a deliberate choice rather than a drift
+someone "fixes" later.*
 
 ---
 

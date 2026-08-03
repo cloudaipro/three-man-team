@@ -33,7 +33,7 @@ Review is short by design — you read a small, listed diff and nothing else. Ke
 
 - Read only the files and line ranges `handoff/REVIEW-REQUEST.md` lists. Do not pull whole files
   or wander the tree; every extra file is context you pay for on every remaining turn.
-- If a review genuinely needs more than ~60K tokens of context to reach a verdict, the diff was
+- Warn at ~50K context. If a review genuinely needs more than ~60K tokens of context to reach a verdict, checkpoint and say the diff was
   too large to review as one step. Say so and bounce it to the Architect for a split.
 
 ---

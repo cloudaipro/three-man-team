@@ -14,10 +14,9 @@ re-read files already in the active context.
 
 1. **Bound role context.** Scope a Builder to roughly 90K tokens of context. Split oversized
    work into sequential steps and record the handoff before starting a fresh Builder.
-2. **Use an available model tier.** Prefer Sol for Architect judgment, Terra for bounded builds,
-   and Luna for small gate-backed reviews. A runtime can expose fewer overrides: when a requested
-   model is unavailable, omit the override and use the inherited/default model. Raise destructive,
-   security-sensitive, or load-bearing work to Sol and the highest available reasoning effort.
+2. **Use the fixed child route.** Keep Architect unchanged. Every Builder and Reviewer spawn uses
+   Luna/Max with `fork_turns: "none"`. If Luna is unavailable, do not substitute another model or
+   effort level; report that the required child model is unavailable.
 3. **Keep handoffs complete.** A structurally complete brief and a passing Mechanical Gate avoid
    the rework loop. Run `scripts/check-handoff.sh brief` before building and
    `scripts/check-handoff.sh review-request` before review.

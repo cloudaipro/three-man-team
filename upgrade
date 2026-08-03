@@ -30,6 +30,8 @@ Options:
                         upgrade already refreshes — and the project holds only
                         stubs or your own customizations, neither of which can
                         be safely overwritten
+  --migrate-role-files  (codex only) explicitly back up existing local role
+                        files, then replace them with lean project deltas.
 
 Environment:
   TMT_CODEX_SKILL_DIR   (codex only) exact skill directory to refresh.
@@ -68,6 +70,7 @@ USAGE
 CLI=""
 PROJECT=""
 REPLACE=0
+MIGRATE_CODEX_ROLES=0
 DRY=0
 
 for arg in "$@"; do
@@ -75,6 +78,7 @@ for arg in "$@"; do
     claude|codex)
       if [ -z "$CLI" ] && [ -z "$PROJECT" ]; then CLI="$arg"; else PROJECT="$arg"; fi ;;
     --replace-role-files) REPLACE=1 ;;
+    --migrate-role-files) MIGRATE_CODEX_ROLES=1 ;;
     --dry-run)            DRY=1 ;;
     -h|--help)            usage; exit 0 ;;
     -*)                   echo "Unknown option: $arg (see --help)"; exit 1 ;;
@@ -94,6 +98,10 @@ if [ "$CLI" = "codex" ] && [ "$REPLACE" = 1 ]; then
   echo "✗ --replace-role-files applies to claude installs only."
   echo "  Codex role files are stubs you customized — the refreshed skill carries"
   echo "  the full templates at references/role-templates/ for you to re-apply."
+  exit 1
+fi
+if [ "$CLI" != "codex" ] && [ "$MIGRATE_CODEX_ROLES" = 1 ]; then
+  echo "✗ --migrate-role-files applies to codex installs only."
   exit 1
 fi
 
@@ -215,7 +223,48 @@ if [ "$CLI" = "codex" ]; then
       exit 1
     fi
   else
-    plan "run the skill's setup-project.sh — adds only files your project is missing (e.g. RULES.md)"
+    plan "run the skill's setup-project.sh — adds only files your project is missing (e.g. RULES.md and the aggregate audit)"
+  fi
+
+  if [ "$MIGRATE_CODEX_ROLES" = 1 ]; then
+    echo ""
+    echo "— Migrating Codex role files (explicit, backup-producing)"
+    if [ "$DRY" = 0 ]; then
+      ROLE_BACKUP_BASE="$PROJECT/.tmt-codex-role-backup-$(date +%Y%m%d-%H%M%S)"
+      ROLE_BACKUP="$ROLE_BACKUP_BASE"
+      ROLE_BACKUP_SUFFIX=0
+      # mkdir without -p is the reservation: an existing backup is never reused.
+      while ! mkdir "$ROLE_BACKUP" 2>/dev/null; do
+        ROLE_BACKUP_SUFFIX=$((ROLE_BACKUP_SUFFIX + 1))
+        ROLE_BACKUP="$ROLE_BACKUP_BASE-$ROLE_BACKUP_SUFFIX"
+      done
+      ROLE_FILES=()
+      for role in ARCHITECT BUILDER REVIEWER; do
+        if [ -f "$PROJECT/${role}.md" ]; then
+          if ! cp "$PROJECT/${role}.md" "$ROLE_BACKUP/${role}.md"; then
+            echo "✗ Could not back up ${role}.md; no role files were replaced."
+            exit 1
+          fi
+          ROLE_FILES+=("$role")
+        else
+          say "${role}.md is absent; setup leaves it absent."
+        fi
+      done
+      for role in "${ROLE_FILES[@]}"; do
+        if ! cp "$SKILL_SRC/templates/project/${role}.md" "$PROJECT/${role}.md"; then
+          echo "✗ Could not replace ${role}.md; restoring all migrated role files from $ROLE_BACKUP."
+          for restore_role in "${ROLE_FILES[@]}"; do
+            if ! cp "$ROLE_BACKUP/${restore_role}.md" "$PROJECT/${restore_role}.md"; then
+              echo "✗ Could not restore ${restore_role}.md from $ROLE_BACKUP."
+            fi
+          done
+          exit 1
+        fi
+        plan "${role}.md replaced with a lean delta (backup: $ROLE_BACKUP/${role}.md)"
+      done
+    else
+      plan "back up existing role files, then replace them with lean Codex deltas"
+    fi
   fi
 
   if [ -d "$PLUGIN_DEST" ]; then

@@ -1,6 +1,12 @@
 {
-  "latest": "v2.4.0",
+  "latest": "v2.5.0",
   "versions": [
+    {
+      "version": "v2.5.0",
+      "released": "2026-08-02",
+      "critical": true,
+      "reason": "Codex role files now become lean project deltas only through an explicit backup-producing migration; every Builder and Reviewer spawn uses Luna/Max with no alternate child route; the release also adds aggregate-only local usage auditing."
+    },
     {
       "version": "v2.4.0",
       "released": "2026-08-01",

@@ -36,6 +36,14 @@ else
   ok "codex-skill bundled registry matches releases/latest.json"
 fi
 
+if [ ! -f "releases/$LATEST_V.json" ] || [ ! -f "codex-skill/releases/$LATEST_V.json" ]; then
+  problem "current release record $LATEST_V is missing from a shipped release directory"
+elif ! cmp -s "releases/$LATEST_V.json" "codex-skill/releases/$LATEST_V.json"; then
+  problem "codex-skill/releases/$LATEST_V.json is out of sync with releases/$LATEST_V.json"
+else
+  ok "Codex bundled current release record matches releases/$LATEST_V.json"
+fi
+
 # An update walk needs the detailed release files, not only the registry. The
 # plugin and standalone Codex skill work offline, so every registry release
 # must be bundled with its matching JSON document.
@@ -95,6 +103,8 @@ tag_exists() {
 # A forgotten tag turns into a hard failure the moment the next version
 # enters the registry and the untagged one is no longer latest.
 TAGS_OK=1
+REMOTE_TAGS_AVAILABLE=0
+git ls-remote --tags origin >/dev/null 2>&1 && REMOTE_TAGS_AVAILABLE=1
 for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); do
   # skip versions older than the floor
   if [ "$v" != "$TAG_FLOOR" ] && \
@@ -106,6 +116,8 @@ for v in $(grep -o '"version": *"[^"]*"' releases/latest.json | cut -d'"' -f4); 
   fi
   if [ "$v" = "$LATEST_V" ]; then
     echo "  ⚠ $v (latest) is not tagged yet — finish the release: git tag $v && git push origin $v && gh release create $v"
+  elif [ "$REMOTE_TAGS_AVAILABLE" = 0 ]; then
+    echo "  ⚠ $v has no local tag and origin is unavailable — historical tag check skipped"
   else
     problem "$v is in the registry but has no git tag — releases must be tagged"
     TAGS_OK=0
@@ -199,7 +211,7 @@ done <<< "$PARITY_FILES"
 
 # Role-neutral files must be byte-identical everywhere they ship
 IDENTICAL_SETS="RULES.md:templates/project-folder/RULES.md templates/generic/RULES.md codex-skill/templates/project/RULES.md
-check-handoff.sh:templates/project-folder/scripts/check-handoff.sh templates/generic/scripts/check-handoff.sh codex-skill/templates/project/scripts/check-handoff.sh
+check-handoff.sh:scripts/check-handoff.sh templates/project-folder/scripts/check-handoff.sh templates/generic/scripts/check-handoff.sh codex-skill/templates/project/scripts/check-handoff.sh
 ARCHITECT-BRIEF.md:templates/project-folder/handoff/ARCHITECT-BRIEF.md templates/generic/handoff/ARCHITECT-BRIEF.md codex-skill/templates/project/handoff/ARCHITECT-BRIEF.md
 BUILD-LOG.md:templates/project-folder/handoff/BUILD-LOG.md templates/generic/handoff/BUILD-LOG.md codex-skill/templates/project/handoff/BUILD-LOG.md
 REVIEW-REQUEST.md:templates/project-folder/handoff/REVIEW-REQUEST.md templates/generic/handoff/REVIEW-REQUEST.md codex-skill/templates/project/handoff/REVIEW-REQUEST.md
@@ -252,6 +264,101 @@ for f in codex-skill/SKILL.md codex-skill/references/role-templates/ARCHITECT.md
     problem "$f does not wire the Codex version check into session start"
   fi
 done
+for role in ARCHITECT BUILDER REVIEWER; do
+  role_file="codex-skill/templates/project/$role.md"
+  if [ ! -f "$role_file" ] || ! grep -q 'canonical workflow' "$role_file"; then
+    problem "$role_file is missing a lean project-delta contract"
+  fi
+done
+if [ ! -x codex-skill/scripts/codex-usage-audit.py ]; then
+  problem "codex-skill/scripts/codex-usage-audit.py is missing or not executable"
+fi
+ACTIVE_CODEX_ROUTES="codex-skill/SKILL.md codex-skill/references/role-templates/ARCHITECT.md"
+check_normal_role_routes() {
+  route_file=$1
+  route_role=$2
+  route_start=$3
+  route_end=$4
+  route_task=$5
+  other_route_task=$6
+  start_count=$(grep -F -c "$route_start" "$route_file" || true)
+  end_count=$(grep -F -c "$route_end" "$route_file" || true)
+
+  if [ "$start_count" -ne 1 ] || [ "$end_count" -ne 1 ]; then
+    problem "$route_file must contain one bounded normal $route_role routing block"
+    return
+  fi
+
+  start_line=$(grep -F -n "$route_start" "$route_file" | cut -d: -f1)
+  end_line=$(grep -F -n "$route_end" "$route_file" | cut -d: -f1)
+  if [ "$start_line" -ge "$end_line" ]; then
+    problem "$route_file normal $route_role routing block has unordered boundaries"
+    return
+  fi
+
+  route_block="$(awk -v start="$route_start" -v end="$route_end" '
+    index($0, start) { collecting = 1 }
+    collecting && index($0, end) { exit }
+    collecting { print }
+  ' "$route_file")"
+
+  if ! printf '%s\n' "$route_block" | grep -Fq "$route_task"; then
+    problem "$route_file normal $route_role routing block has the wrong task name"
+  elif printf '%s\n' "$route_block" | grep -Fq "$other_route_task"; then
+    problem "$route_file normal $route_role routing block is satisfied by the other role"
+  fi
+
+  required_route='model: "gpt-5.6-luna", reasoning_effort: "max"'
+  route_count=$(printf '%s\n' "$route_block" | grep -F -c "$required_route" || true)
+  if [ "$route_count" -ne 1 ]; then
+    problem "$route_file normal $route_role routing block must carry exactly one Luna/Max route"
+  elif ! printf '%s\n' "$route_block" | grep -Fq 'Luna is unavailable'; then
+    problem "$route_file normal $route_role routing block has no unavailable-Luna behavior"
+  elif ! printf '%s\n' "$route_block" | grep -Fq 'do not spawn'; then
+    problem "$route_file normal $route_role routing block does not block substitute spawning"
+  elif printf '%s\n' "$route_block" | grep -Fq 'gpt-5.6-terra'; then
+    problem "$route_file normal $route_role routing block contains a Terra alternative"
+  elif printf '%s\n' "$route_block" | grep -Fq 'main-session inheritance'; then
+    problem "$route_file normal $route_role routing block contains an inheritance alternative"
+  else
+    ok "$route_file normal $route_role routing block is Luna/Max only"
+  fi
+}
+for f in $ACTIVE_CODEX_ROUTES; do
+  case "$f" in
+    codex-skill/SKILL.md)
+      builder_start='To spawn the Builder,'
+      builder_end='To spawn the Reviewer,'
+      reviewer_start='To spawn the Reviewer,'
+      reviewer_end='**Bound context and validation.**'
+      ;;
+    codex-skill/references/role-templates/ARCHITECT.md)
+      builder_start='Spawn the Builder with a unique `task_name`'
+      builder_end='## Briefing the Reviewer'
+      reviewer_start='When the Builder signals done, spawn the Reviewer with a unique `task_name`'
+      reviewer_end='## Context Budget'
+      ;;
+  esac
+  check_normal_role_routes "$f" Builder "$builder_start" "$builder_end" \
+    'builder_step_${step}_attempt_${attempt}' 'reviewer_step_${step}_attempt_${attempt}'
+  check_normal_role_routes "$f" Reviewer "$reviewer_start" "$reviewer_end" \
+    'reviewer_step_${step}_attempt_${attempt}' 'builder_step_${step}_attempt_${attempt}'
+  if grep -Fq 'reasoning_effort: "medium"' "$f"; then
+    problem "$f retains an obsolete medium-effort child route"
+  fi
+  if grep -Fq '**Critical Builder route' "$f" || grep -Fq '**Critical Reviewer route' "$f"; then
+    problem "$f retains a critical-child routing branch"
+  fi
+done
+CURRENT_CODEX_ROUTING_DOCS="README.md CHANGELOG.md codex-skill/references/token-optimization.md codex-skill/PORTING-NOTES.md releases/$LATEST_V.json codex-skill/releases/$LATEST_V.json"
+for f in $CURRENT_CODEX_ROUTING_DOCS; do
+  if ! grep -Fq 'Luna/Max' "$f"; then
+    problem "$f does not document the active Codex Luna/Max routing contract"
+  fi
+  if grep -Eq 'Terra/Max|main-session inheritance' "$f"; then
+    problem "$f documents an alternate Codex child routing contract"
+  fi
+done
 if grep -q 'agent_type' codex-skill/SKILL.md README.md; then
   problem "active Codex instructions still use unsupported agent_type routing"
 else
@@ -261,7 +368,7 @@ fi
 if grep -q 'features\.multi_agent_v2' codex-skill/PORTING-NOTES.md; then
   problem "PORTING-NOTES.md retains obsolete multi-agent routing configuration"
 else
-  ok "Codex routing notes use capability-aware fallback"
+  ok "Codex routing notes use fixed Luna/Max child overrides"
 fi
 
 if grep -q 'Type `/architect`' codex-skill/templates/project/handoff/SESSION-CHECKPOINT.md; then
@@ -290,7 +397,7 @@ for obsolete in three-man-team/.app.json three-man-team/.codex-plugin/plugin.jso
 done
 
 CODEX_SETUP="codex-skill/scripts/setup-project.sh"
-for needle in 'local plugin_root="${TMT_PLUGIN_ROOT:-$HOME/plugins}"' 'skills/three-man-team/SKILL.md' 'plugin add' 'TMT_SKIP_PLUGIN_ADD' 'references/role-templates/${role}.md'; do
+for needle in 'local plugin_root="${TMT_PLUGIN_ROOT:-$HOME/plugins}"' 'skills/three-man-team/SKILL.md' 'plugin add' 'TMT_SKIP_PLUGIN_ADD' '$TPL/project/${role}.md'; do
   if ! grep -Fq "$needle" "$CODEX_SETUP"; then
     problem "$CODEX_SETUP is missing required plugin/project setup behavior: $needle"
   fi
@@ -332,11 +439,12 @@ while IFS= read -r f; do
 done <<< "$UPGRADE_SOURCES"
 [ "$UPG_OK" = 1 ] && ok "every file the upgrade tool ships exists in the clone"
 
-# A shipped script that lands without its executable bit is a gate command that fails on
-# every project that installs it — and the failure looks like a broken gate, not a broken
-# install. git tracks the mode, so assert it here.
+# The active checker is the canonical source for the framework's own Mechanical
+# Gate; the portable template copies are installed into projects. All need the
+# executable bit, and the identical-copy check above keeps their behavior aligned.
 EXEC_OK=1
-for f in templates/project-folder/scripts/check-handoff.sh \
+for f in scripts/check-handoff.sh \
+         templates/project-folder/scripts/check-handoff.sh \
          templates/generic/scripts/check-handoff.sh \
          codex-skill/templates/project/scripts/check-handoff.sh; do
   if [ ! -x "$f" ]; then

@@ -1,0 +1,41 @@
+{
+  "version": "v2.5.0",
+  "released": "2026-08-02",
+  "from_version": "v2.4.0",
+  "arch_opening": "There is a critical release available — version 2.5.0. It changes Codex role-file upgrades and adds measurable cost guardrails. I will check what applies before acknowledging it.",
+  "changes": [
+    {
+      "id": "codex-lean-role-migration",
+      "type": "migration",
+      "title": "Codex role files are lean project deltas",
+      "what_changed": "Fresh Codex projects receive small role-delta files while the installed skill remains canonical. Existing custom role files change only with `./upgrade codex --migrate-role-files <project>`, which copies each file to a timestamped backup first.",
+      "old_behavior": "Fresh projects copied full workflow role templates and existing custom local files had no explicit slimming migration.",
+      "new_behavior": "The migration is opt-in, backup-producing, and never happens during a normal upgrade.",
+      "user_impact_plain": "Your custom personas remain untouched unless you explicitly choose the migration.",
+      "how_to_assess": "Review local role customizations; migrate only after confirming the timestamped backup location.",
+      "user_decision": "Do you want to migrate local Codex role files to lean deltas after preserving their backups?"
+    },
+    {
+      "id": "codex-usage-budget-guardrails",
+      "type": "feature",
+      "title": "Fresh-context budgets and aggregate local usage audit",
+      "what_changed": "Role budgets now warn/checkpoint at 85K/100K Architect, 75K/90K Builder, and 50K/60K Reviewer. `scripts/codex-usage-audit.py` aggregates final cumulative JSONL usage per session without emitting message content.",
+      "old_behavior": "Budget guidance lacked warning thresholds and local evidence was manual.",
+      "new_behavior": "Every child route preserves `fork_turns: none`; usage evidence is aggregate-only and estimates are labelled.",
+      "user_impact_plain": "Long work checkpoints sooner and review requests can cite privacy-preserving aggregate usage.",
+      "how_to_assess": "Run the audit locally if session JSONL is available; compare only aggregate counts, not conversation contents.",
+      "user_decision": "No product decision is required."
+    },
+    {
+      "id": "codex-luna-max-child-routing",
+      "type": "improvement",
+      "title": "Codex Builder and Reviewer default to Luna/Max",
+      "what_changed": "The active Codex skill and Architect template now route every Builder and Reviewer spawn to gpt-5.6-luna with reasoning_effort max and fork_turns none. Alternate fallback, inheritance, and critical-child routes do not exist.",
+      "old_behavior": "The Builder defaulted to Terra/medium, the Reviewer defaulted to Luna/medium, and later drafts introduced alternate fallback and critical-child routing.",
+      "new_behavior": "Architect routing remains unchanged. Every Builder and Reviewer spawn uses Luna/Max with fresh context; unavailable Luna blocks the spawn and is reported to the Product Owner.",
+      "user_impact_plain": "Bob and Richard always run on the one model-and-effort configuration selected by the Product Owner. The framework never silently substitutes another child configuration.",
+      "how_to_assess": "Check codex-skill/SKILL.md and codex-skill/references/role-templates/ARCHITECT.md for one Luna/Max route per role, no alternate child route, and explicit unavailable-Luna blocking behavior.",
+      "user_decision": "No product decision is required."
+    }
+  ]
+}

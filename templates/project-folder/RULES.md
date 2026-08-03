@@ -22,6 +22,7 @@ mechanically pays for it in review cycles.
 |---|---|
 | `awk 'END{exit (NR>400)}' handoff/BUILD-LOG.md` | BUILD-LOG has not outgrown rotation. Ships with the framework — do not delete it |
 | `scripts/check-handoff.sh brief` | The brief this step was built from is structurally complete — sections present, placeholders filled, Definition of Done carries a command. Ships with the framework — do not delete it |
+| `python3 scripts/codex-usage-audit.py` | Optional aggregate-only local usage evidence; it must never print prompt or response content |
 | `[command]` | [What passing means — e.g. "no lint errors", "all tests green", "build compiles"] |
 
 The handoff check runs at three points, and only the third is in the table above:
